@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Box,
@@ -30,10 +30,10 @@ interface MeetingDetailsPageProps {
   onActionStatusChange: (meetingId: string, actionId: string, status: ActionItemStatus) => void;
 }
 
-export const MeetingDetailsPage: React.FC<MeetingDetailsPageProps> = ({
+export const MeetingDetailsPage = ({
   meetings,
   onActionStatusChange,
-}) => {
+}: MeetingDetailsPageProps) => {
   const { id } = useParams<{ id: string }>();
   const meeting = meetings.find((m) => m.id === id);
 
@@ -201,7 +201,7 @@ export const MeetingDetailsPage: React.FC<MeetingDetailsPageProps> = ({
                   {meeting.summary}
                 </Typography>
 
-                {meeting.keyDecisions && meeting.keyDecisions.length > 0 && (
+                {meeting.keyDecisions && meeting.keyDecisions.length > 0 ? (
                   <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5, color: 'text.primary' }}>
                       Key Decisions
@@ -217,11 +217,20 @@ export const MeetingDetailsPage: React.FC<MeetingDetailsPageProps> = ({
                       ))}
                     </List>
                   </Box>
+                ) : (
+                  <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5, color: 'text.primary' }}>
+                      Key Decisions
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                      No specific decisions were flagged for this session
+                    </Typography>
+                  </Box>
                 )}
               </Box>
             ) : (
               <Alert severity="info" variant="outlined" sx={{ borderRadius: 2 }}>
-                Protocol summarization will be generated once discussion notes or audio files are submitted.
+                AI protocol summary and key decisions will be generated automatically once meeting notes or audio files are submitted
               </Alert>
             )}
           </CardContent>
@@ -261,7 +270,7 @@ export const MeetingDetailsPage: React.FC<MeetingDetailsPageProps> = ({
               Meeting Audio & Recording
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Audio file or transcript used for protocol generation and analysis.
+              Audio file or transcript used for protocol generation and analysis
             </Typography>
 
             {meeting.audioFileName ? (
@@ -299,7 +308,7 @@ export const MeetingDetailsPage: React.FC<MeetingDetailsPageProps> = ({
                 }}
               >
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  No audio recording attached to this session.
+                  No audio recording attached to this session
                 </Typography>
                 <Button size="small" variant="outlined" sx={{ textTransform: 'none' }}>
                   Upload Audio File

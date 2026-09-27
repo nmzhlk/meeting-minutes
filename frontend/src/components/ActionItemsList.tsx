@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Table,
   TableBody,
@@ -24,7 +23,7 @@ interface ActionItemsListProps {
   onStatusChange?: (itemId: string, newStatus: ActionItemStatus) => void;
 }
 
-export const ActionItemsList: React.FC<ActionItemsListProps> = ({ items, onStatusChange }) => {
+export const ActionItemsList = ({ items, onStatusChange }: ActionItemsListProps) => {
   if (!items || items.length === 0) {
     return (
       <Box
@@ -65,12 +64,12 @@ export const ActionItemsList: React.FC<ActionItemsListProps> = ({ items, onStatu
       <Table sx={{ minWidth: 650 }}>
         <TableHead>
           <TableRow sx={{ bgcolor: 'background.default' }}>
-            <TableCell sx={{ width: 50 }}>Status</TableCell>
+            <TableCell sx={{ width: 50 }}>Done</TableCell>
             <TableCell>Action Item</TableCell>
             <TableCell sx={{ width: 140 }}>Assignee</TableCell>
             <TableCell sx={{ width: 130 }}>Priority</TableCell>
             <TableCell sx={{ width: 130 }}>Due Date</TableCell>
-            <TableCell sx={{ width: 150 }}>Progress</TableCell>
+            <TableCell sx={{ width: 150 }}>Status</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -98,6 +97,7 @@ export const ActionItemsList: React.FC<ActionItemsListProps> = ({ items, onStatu
                     onChange={() => handleCheckboxToggle(item)}
                     color="success"
                     size="small"
+                    aria-label={`Mark "${item.title}" as ${isDone ? 'incomplete' : 'complete'}`}
                   />
                 </TableCell>
 

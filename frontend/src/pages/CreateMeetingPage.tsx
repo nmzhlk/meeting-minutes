@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import {
   Box,
@@ -12,18 +12,17 @@ import {
   List,
   ListItem,
   ListItemText,
-  Alert,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import type { Meeting, Participant } from '../types/meeting';
+import type { CreateMeetingInput, Participant } from '../types/meeting';
 
 interface CreateMeetingPageProps {
-  onCreate: (meeting: Meeting) => void;
+  onCreate: (input: CreateMeetingInput) => void;
 }
 
-export const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({ onCreate }) => {
+export const CreateMeetingPage = ({ onCreate }: CreateMeetingPageProps) => {
   const navigate = useNavigate();
 
   const [title, setTitle] = useState('');
@@ -35,11 +34,8 @@ export const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({ onCreate }
     return tomorrow.toISOString().slice(0, 16);
   });
   const [durationMinutes, setDurationMinutes] = useState(45);
-  const [participantsText, setParticipantsText] = useState('John Doe, Alice Smith');
-  const [agendaList, setAgendaList] = useState<string[]>([
-    'Sprint goal alignment',
-    'Review task estimates',
-  ]);
+  const [participantsText, setParticipantsText] = useState('');
+  const [agendaList, setAgendaList] = useState<string[]>([]);
   const [newAgendaPoint, setNewAgendaPoint] = useState('');
   const [error, setError] = useState('');
 
@@ -53,7 +49,7 @@ export const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({ onCreate }
     setAgendaList(agendaList.filter((_, idx) => idx !== indexToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
 
     if (!title.trim()) {
@@ -71,13 +67,11 @@ export const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({ onCreate }
       }))
       .filter((p) => p.name.length > 0);
 
-    const newMeeting: Meeting = {
-      id: Date.now().toString(),
+    const input: CreateMeetingInput = {
       title: title.trim(),
       description: description.trim(),
       date: new Date(date),
-      durationMinutes: Number(durationMinutes) || 30,
-      status: 'SCHEDULED',
+      durationMinutes: Math.max(5, Number(durationMinutes) || 30),
       participants:
         participants.length > 0
           ? participants
@@ -85,7 +79,7 @@ export const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({ onCreate }
       agenda: agendaList,
     };
 
-    onCreate(newMeeting);
+    onCreate(input);
     navigate('/');
   };
 
@@ -107,12 +101,6 @@ export const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({ onCreate }
         Define your meeting agenda, schedule, and invite participants to prepare for protocol generation
       </Typography>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
       <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2.5 }}>
         <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <Box component="form" onSubmit={handleSubmit} noValidate>
@@ -126,6 +114,8 @@ export const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({ onCreate }
                   setTitle(e.target.value);
                   if (error) setError('');
                 }}
+                error={Boolean(error)}
+                helperText={error || undefined}
                 fullWidth
               />
 
@@ -158,15 +148,17 @@ export const CreateMeetingPage: React.FC<CreateMeetingPageProps> = ({ onCreate }
                   type="number"
                   value={durationMinutes}
                   onChange={(e) => setDurationMinutes(Number(e.target.value))}
+                  slotProps={{ htmlInput: { min: 5, max: 480, step: 5 } }}
                   fullWidth
                 />
               </Box>
 
               <TextField
                 label="Participants (comma-separated)"
+                placeholder="e.g. John Doe, Alice Smith"
                 value={participantsText}
                 onChange={(e) => setParticipantsText(e.target.value)}
-                helperText="Enter full names separated by commas (e.g. John Doe, Alice Smith)"
+                helperText="Enter full names separated by commas (optional, defaults to organizer)"
                 fullWidth
               />
 

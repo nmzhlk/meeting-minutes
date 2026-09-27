@@ -1,4 +1,3 @@
-import React from 'react';
 import { Chip, type ChipProps } from '@mui/material';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import MicIcon from '@mui/icons-material/Mic';
@@ -11,7 +10,7 @@ interface MeetingStatusBadgeProps {
   size?: 'small' | 'medium';
 }
 
-export const MeetingStatusBadge: React.FC<MeetingStatusBadgeProps> = ({ status, size = 'small' }) => {
+export const MeetingStatusBadge = ({ status, size = 'small' }: MeetingStatusBadgeProps) => {
   let label = 'Scheduled';
   let color: ChipProps['color'] = 'info';
   let icon = <ScheduleIcon sx={{ fontSize: 16 }} />;
@@ -59,7 +58,7 @@ interface PriorityBadgeProps {
   size?: 'small' | 'medium';
 }
 
-export const PriorityBadge: React.FC<PriorityBadgeProps> = ({ priority, size = 'small' }) => {
+export const PriorityBadge = ({ priority, size = 'small' }: PriorityBadgeProps) => {
   let label = 'Medium';
   let color: ChipProps['color'] = 'warning';
 
@@ -97,7 +96,7 @@ interface ActionStatusBadgeProps {
   size?: 'small' | 'medium';
 }
 
-export const ActionStatusBadge: React.FC<ActionStatusBadgeProps> = ({ status, size = 'small' }) => {
+export const ActionStatusBadge = ({ status, size = 'small' }: ActionStatusBadgeProps) => {
   let label = 'To Do';
   let color: ChipProps['color'] = 'default';
 

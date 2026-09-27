@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Box,
@@ -31,7 +31,7 @@ interface DashboardPageProps {
   meetings: Meeting[];
 }
 
-export const DashboardPage: React.FC<DashboardPageProps> = ({ meetings }) => {
+export const DashboardPage = ({ meetings }: DashboardPageProps) => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
@@ -187,13 +187,32 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ meetings }) => {
         </FormControl>
       </Box>
 
+      {hasActiveFilters && filteredMeetings.length > 0 && (
+        <Box sx={{ mb: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="body2" color="text.secondary">
+            Showing <strong>{filteredMeetings.length}</strong> of <strong>{meetings.length}</strong> meetings
+          </Typography>
+          <Button
+            size="small"
+            variant="text"
+            onClick={handleResetFilters}
+            startIcon={<RestartAltIcon fontSize="small" />}
+            sx={{ textTransform: 'none', py: 0.2, fontSize: '0.8rem' }}
+          >
+            Clear filters
+          </Button>
+        </Box>
+      )}
+
       {filteredMeetings.length === 0 ? (
         <Card elevation={0} sx={{ p: 5, textAlign: 'center', border: '1px dashed', borderColor: 'divider' }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-            No meetings found
+            {hasActiveFilters ? 'No meetings found' : 'No meetings scheduled yet'}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Try adjusting your search criteria or create a new meeting
+            {hasActiveFilters
+              ? 'Try adjusting your search query or reset the filters'
+              : 'Get started by scheduling your first meeting session'}
           </Typography>
           <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1.5 }}>
             {hasActiveFilters && (
@@ -239,6 +258,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ meetings }) => {
                 borderColor: 'divider',
                 borderRadius: 2.5,
                 bgcolor: 'background.paper',
+                transition: 'border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                  boxShadow: '0 6px 20px rgba(37, 99, 235, 0.08)',
+                  transform: 'translateY(-2px)',
+                },
               }}
             >
               <CardContent sx={{ pb: 1 }}>

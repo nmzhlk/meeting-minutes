@@ -4,7 +4,7 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import { theme } from './theme/theme';
 import { Layout } from './components/Layout';
 import { initialMeetings } from './mocks/meetings';
-import type { Meeting, ActionItemStatus } from './types/meeting';
+import type { Meeting, ActionItemStatus, CreateMeetingInput } from './types/meeting';
 
 import { DashboardPage } from './pages/DashboardPage';
 import { CreateMeetingPage } from './pages/CreateMeetingPage';
@@ -14,7 +14,12 @@ import { NotFoundPage } from './pages/NotFoundPage';
 function App() {
   const [meetings, setMeetings] = useState<Meeting[]>(initialMeetings);
 
-  const handleCreateMeeting = (newMeeting: Meeting) => {
+  const handleCreateMeeting = (input: CreateMeetingInput) => {
+    const newMeeting: Meeting = {
+      ...input,
+      id: Date.now().toString(),
+      status: 'SCHEDULED',
+    };
     setMeetings((prev) => [newMeeting, ...prev]);
   };
 

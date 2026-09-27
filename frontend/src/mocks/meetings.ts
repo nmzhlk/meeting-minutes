@@ -13,7 +13,7 @@ export const initialMeetings: Meeting[] = [
       { id: 'p2', name: 'Alice Smith', email: 'alice@example.com', role: 'Developer' },
     ],
     agenda: ['Review backlog', 'Estimate tasks', 'Assign action items'],
-    summary: 'Agreed on sprint scope and main deliverables. Next sync scheduled for Friday.',
+    summary: 'Agreed on sprint scope and main deliverables. Next sync scheduled for Friday',
     keyDecisions: [
       'Focus on frontend UI for the first milestone',
       'Backend integration scheduled for the next sprint',

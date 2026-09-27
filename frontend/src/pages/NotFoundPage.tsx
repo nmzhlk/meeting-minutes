@@ -1,8 +1,7 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { Box, Typography, Button } from '@mui/material';
 
-export const NotFoundPage: React.FC = () => {
+export const NotFoundPage = () => {
   return (
     <Box sx={{ py: 10, textAlign: 'center' }}>
       <Typography variant="h3" sx={{ fontWeight: 700, mb: 1.5 }}>
