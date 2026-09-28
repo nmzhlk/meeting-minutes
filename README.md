@@ -49,4 +49,12 @@ The service streamlines organizational overhead around business meetings and ens
 4. Access the app at http://localhost:5173
 
 ## 6. Screenshots
-TBD
+
+### Meetings Dashboard (`/`)
+![Meetings Dashboard](docs/screenshots/dashboard.png)
+
+### Meeting Creation Form (`/meetings/create`)
+![Meeting Creation Form](docs/screenshots/create_meeting.png)
+
+### Meeting Protocol & Action Items (`/meetings/:id`)
+![Meeting Protocol & Insights](docs/screenshots/meeting_details.png)
