@@ -1,11 +1,11 @@
-from app.models.participant import Participant
+from app.models.action_item import ActionItem
 from app.models.meeting import (
     Meeting,
     MeetingAgendaItem,
     MeetingDecision,
     meeting_participants,
 )
-from app.models.action_item import ActionItem
+from app.models.participant import Participant
 
 __all__ = [
     "Participant",

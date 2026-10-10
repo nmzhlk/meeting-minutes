@@ -1,12 +1,13 @@
 import uuid
-from typing import List, Optional
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
+
 from app.models.action_item import ActionItem
 from app.schemas.action_item import ActionItemCreate, ActionItemUpdate
 
 
-def get_action_item(db: Session, action_id: uuid.UUID) -> Optional[ActionItem]:
+def get_action_item(db: Session, action_id: uuid.UUID) -> ActionItem | None:
     query = (
         select(ActionItem)
         .options(joinedload(ActionItem.assignee))
@@ -17,12 +18,12 @@ def get_action_item(db: Session, action_id: uuid.UUID) -> Optional[ActionItem]:
 
 def get_action_items(
     db: Session,
-    meeting_id: Optional[uuid.UUID] = None,
-    assignee_id: Optional[uuid.UUID] = None,
-    status: Optional[str] = None,
+    meeting_id: uuid.UUID | None = None,
+    assignee_id: uuid.UUID | None = None,
+    status: str | None = None,
     skip: int = 0,
     limit: int = 100,
-) -> List[ActionItem]:
+) -> list[ActionItem]:
     query = (
         select(ActionItem)
         .options(joinedload(ActionItem.assignee))
@@ -33,7 +34,8 @@ def get_action_items(
     if assignee_id:
         query = query.where(ActionItem.assignee_id == assignee_id)
     if status:
-        query = query.where(ActionItem.status == status)
+        status_val = status.value if hasattr(status, "value") else str(status)
+        query = query.where(ActionItem.status == status_val)
 
     query = query.offset(skip).limit(limit)
     return list(db.scalars(query).all())
@@ -45,8 +47,12 @@ def create_action_item(db: Session, obj_in: ActionItemCreate) -> ActionItem:
         assignee_id=obj_in.assignee_id,
         title=obj_in.title,
         due_date=obj_in.due_date,
-        status=obj_in.status,
-        priority=obj_in.priority,
+        status=obj_in.status.value
+        if hasattr(obj_in.status, "value")
+        else str(obj_in.status),
+        priority=obj_in.priority.value
+        if hasattr(obj_in.priority, "value")
+        else str(obj_in.priority),
     )
     db.add(db_obj)
     db.commit()
@@ -59,7 +65,8 @@ def update_action_item(
 ) -> ActionItem:
     update_data = obj_in.model_dump(exclude_unset=True)
     for field, value in update_data.items():
-        setattr(db_obj, field, value)
+        val = value.value if hasattr(value, "value") else value
+        setattr(db_obj, field, val)
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)
@@ -69,7 +76,8 @@ def update_action_item(
 def update_action_item_status(
     db: Session, db_obj: ActionItem, new_status: str
 ) -> ActionItem:
-    db_obj.status = new_status
+    status_val = new_status.value if hasattr(new_status, "value") else str(new_status)
+    db_obj.status = status_val
     db.add(db_obj)
     db.commit()
     db.refresh(db_obj)

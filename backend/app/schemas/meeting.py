@@ -1,11 +1,11 @@
 import uuid
 from datetime import datetime
-from typing import List, Optional
-from pydantic import BaseModel, ConfigDict, Field
-from app.schemas.participant import ParticipantResponse
-from app.schemas.action_item import ActionItemResponse
 
-STATUS_REGEX = r"^(SCHEDULED|RECORDED|PROCESSED|COMPLETED)$"
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.schemas.action_item import ActionItemResponse
+from app.schemas.enums import MeetingStatus
+from app.schemas.participant import ParticipantResponse
 
 
 class AgendaItemResponse(BaseModel):
@@ -25,45 +25,45 @@ class DecisionResponse(BaseModel):
 
 
 class MeetingBase(BaseModel):
-    title: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
+    title: str = Field(min_length=1, max_length=255)
+    description: str | None = None
     meeting_date: datetime
     duration_minutes: int = Field(default=30, ge=1, le=1440)
-    status: str = Field(default="SCHEDULED", pattern=STATUS_REGEX)
-    summary: Optional[str] = None
-    transcript: Optional[str] = None
-    audio_file_name: Optional[str] = Field(None, max_length=255)
+    status: MeetingStatus = MeetingStatus.SCHEDULED
+    summary: str | None = None
+    transcript: str | None = None
+    audio_file_name: str | None = Field(default=None, max_length=255)
 
 
 class MeetingCreate(MeetingBase):
-    participant_ids: Optional[List[uuid.UUID]] = Field(default_factory=list)
-    agenda: Optional[List[str]] = Field(default_factory=list)
-    decisions: Optional[List[str]] = Field(default_factory=list)
+    participant_ids: list[uuid.UUID] = Field(default_factory=list)
+    agenda: list[str] = Field(default_factory=list)
+    decisions: list[str] = Field(default_factory=list)
 
 
 class MeetingUpdate(BaseModel):
-    title: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    meeting_date: Optional[datetime] = None
-    duration_minutes: Optional[int] = Field(None, ge=1, le=1440)
-    status: Optional[str] = Field(None, pattern=STATUS_REGEX)
-    summary: Optional[str] = None
-    transcript: Optional[str] = None
-    audio_file_name: Optional[str] = Field(None, max_length=255)
-    participant_ids: Optional[List[uuid.UUID]] = None
-    agenda: Optional[List[str]] = None
-    decisions: Optional[List[str]] = None
+    title: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = None
+    meeting_date: datetime | None = None
+    duration_minutes: int | None = Field(default=None, ge=1, le=1440)
+    status: MeetingStatus | None = None
+    summary: str | None = None
+    transcript: str | None = None
+    audio_file_name: str | None = Field(default=None, max_length=255)
+    participant_ids: list[uuid.UUID] | None = None
+    agenda: list[str] | None = None
+    decisions: list[str] | None = None
 
 
 class MeetingResponse(MeetingBase):
     id: uuid.UUID
     created_at: datetime
-    participants: List[ParticipantResponse] = Field(default_factory=list)
-    agenda_items: List[AgendaItemResponse] = Field(default_factory=list)
-    decisions: List[DecisionResponse] = Field(default_factory=list)
+    participants: list[ParticipantResponse] = Field(default_factory=list)
+    agenda_items: list[AgendaItemResponse] = Field(default_factory=list)
+    decisions: list[DecisionResponse] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class MeetingDetailResponse(MeetingResponse):
-    action_items: List[ActionItemResponse] = Field(default_factory=list)
+    action_items: list[ActionItemResponse] = Field(default_factory=list)

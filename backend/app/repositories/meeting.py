@@ -1,14 +1,16 @@
 import uuid
-from typing import List, Optional
-from sqlalchemy import select, or_
-from sqlalchemy.orm import Session, selectinload, joinedload
-from app.models.meeting import Meeting, MeetingAgendaItem, MeetingDecision
-from app.models.participant import Participant
+from typing import Any
+
+from sqlalchemy import or_, select
+from sqlalchemy.orm import Session, selectinload
+
 from app.models.action_item import ActionItem
+from app.models.meeting import Meeting, MeetingAgendaItem, MeetingDecision
+from app.repositories.participant import get_participants_by_ids
 from app.schemas.meeting import MeetingCreate, MeetingUpdate
 
 
-def _meeting_detail_options():
+def _meeting_detail_options() -> tuple[Any, ...]:
     return (
         selectinload(Meeting.participants),
         selectinload(Meeting.agenda_items),
@@ -17,7 +19,7 @@ def _meeting_detail_options():
     )
 
 
-def _meeting_list_options():
+def _meeting_list_options() -> tuple[Any, ...]:
     return (
         selectinload(Meeting.participants),
         selectinload(Meeting.agenda_items),
@@ -25,7 +27,7 @@ def _meeting_list_options():
     )
 
 
-def get_meeting(db: Session, meeting_id: uuid.UUID) -> Optional[Meeting]:
+def get_meeting(db: Session, meeting_id: uuid.UUID) -> Meeting | None:
     query = (
         select(Meeting)
         .options(*_meeting_detail_options())
@@ -36,18 +38,19 @@ def get_meeting(db: Session, meeting_id: uuid.UUID) -> Optional[Meeting]:
 
 def get_meetings(
     db: Session,
-    status: Optional[str] = None,
-    search: Optional[str] = None,
+    status: str | None = None,
+    search: str | None = None,
     skip: int = 0,
     limit: int = 100,
-) -> List[Meeting]:
+) -> list[Meeting]:
     query = (
         select(Meeting)
         .options(*_meeting_list_options())
         .order_by(Meeting.meeting_date.desc())
     )
     if status:
-        query = query.where(Meeting.status == status)
+        status_val = status.value if hasattr(status, "value") else str(status)
+        query = query.where(Meeting.status == status_val)
     if search:
         search_pattern = f"%{search}%"
         query = query.where(
@@ -66,21 +69,16 @@ def create_meeting(db: Session, obj_in: MeetingCreate) -> Meeting:
         description=obj_in.description,
         meeting_date=obj_in.meeting_date,
         duration_minutes=obj_in.duration_minutes,
-        status=obj_in.status,
+        status=obj_in.status.value
+        if hasattr(obj_in.status, "value")
+        else str(obj_in.status),
         summary=obj_in.summary,
         transcript=obj_in.transcript,
         audio_file_name=obj_in.audio_file_name,
     )
 
     if obj_in.participant_ids:
-        participants = list(
-            db.scalars(
-                select(Participant).where(
-                    Participant.id.in_(obj_in.participant_ids)
-                )
-            ).all()
-        )
-        db_obj.participants = participants
+        db_obj.participants = get_participants_by_ids(db, obj_in.participant_ids)
 
     if obj_in.agenda:
         for idx, item_text in enumerate(obj_in.agenda):
@@ -100,15 +98,12 @@ def create_meeting(db: Session, obj_in: MeetingCreate) -> Meeting:
     return get_meeting(db, db_obj.id) or db_obj
 
 
-def update_meeting(
-    db: Session, db_obj: Meeting, obj_in: MeetingUpdate
-) -> Meeting:
+def update_meeting(db: Session, db_obj: Meeting, obj_in: MeetingUpdate) -> Meeting:
     scalar_fields = [
         "title",
         "description",
         "meeting_date",
         "duration_minutes",
-        "status",
         "summary",
         "transcript",
         "audio_file_name",
@@ -118,15 +113,15 @@ def update_meeting(
         if val is not None:
             setattr(db_obj, field, val)
 
-    if obj_in.participant_ids is not None:
-        participants = list(
-            db.scalars(
-                select(Participant).where(
-                    Participant.id.in_(obj_in.participant_ids)
-                )
-            ).all()
+    if obj_in.status is not None:
+        db_obj.status = (
+            obj_in.status.value
+            if hasattr(obj_in.status, "value")
+            else str(obj_in.status)
         )
-        db_obj.participants = participants
+
+    if obj_in.participant_ids is not None:
+        db_obj.participants = get_participants_by_ids(db, obj_in.participant_ids)
 
     if obj_in.agenda is not None:
         db_obj.agenda_items.clear()

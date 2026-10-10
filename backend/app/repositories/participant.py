@@ -1,22 +1,30 @@
 import uuid
-from typing import List, Optional
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
 from app.models.participant import Participant
 from app.schemas.participant import ParticipantCreate, ParticipantUpdate
 
 
-def get_participant(db: Session, participant_id: uuid.UUID) -> Optional[Participant]:
+def get_participant(db: Session, participant_id: uuid.UUID) -> Participant | None:
     return db.scalar(select(Participant).where(Participant.id == participant_id))
 
 
-def get_participant_by_email(db: Session, email: str) -> Optional[Participant]:
+def get_participant_by_email(db: Session, email: str) -> Participant | None:
     return db.scalar(select(Participant).where(Participant.email == email))
 
 
-def get_participants(
-    db: Session, skip: int = 0, limit: int = 100
-) -> List[Participant]:
+def get_participants_by_ids(
+    db: Session, participant_ids: list[uuid.UUID]
+) -> list[Participant]:
+    if not participant_ids:
+        return []
+    query = select(Participant).where(Participant.id.in_(participant_ids))
+    return list(db.scalars(query).all())
+
+
+def get_participants(db: Session, skip: int = 0, limit: int = 100) -> list[Participant]:
     query = (
         select(Participant)
         .order_by(Participant.created_at.desc())

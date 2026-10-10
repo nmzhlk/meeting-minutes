@@ -1,16 +1,16 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel, ConfigDict, Field
 
 EMAIL_REGEX = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
 
 
 class ParticipantBase(BaseModel):
-    name: str = Field(..., min_length=1, max_length=255)
-    email: str = Field(..., pattern=EMAIL_REGEX, max_length=255)
-    role: str = Field(..., min_length=1, max_length=100)
-    avatar_url: Optional[str] = Field(None, max_length=1024)
+    name: str = Field(min_length=1, max_length=255)
+    email: str = Field(pattern=EMAIL_REGEX, max_length=255)
+    role: str = Field(min_length=1, max_length=100)
+    avatar_url: str | None = Field(default=None, max_length=1024)
 
 
 class ParticipantCreate(ParticipantBase):
@@ -18,10 +18,10 @@ class ParticipantCreate(ParticipantBase):
 
 
 class ParticipantUpdate(BaseModel):
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    email: Optional[str] = Field(None, pattern=EMAIL_REGEX, max_length=255)
-    role: Optional[str] = Field(None, min_length=1, max_length=100)
-    avatar_url: Optional[str] = Field(None, max_length=1024)
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    email: str | None = Field(default=None, pattern=EMAIL_REGEX, max_length=255)
+    role: str | None = Field(default=None, min_length=1, max_length=100)
+    avatar_url: str | None = Field(default=None, max_length=1024)
 
 
 class ParticipantResponse(ParticipantBase):

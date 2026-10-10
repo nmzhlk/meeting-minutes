@@ -1,18 +1,20 @@
 from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import select
+
 from app.db.base import Base
-from app.db.session import engine, SessionLocal
-import app.models
-from app.models.participant import Participant
-from app.models.meeting import Meeting, MeetingAgendaItem, MeetingDecision
+from app.db.session import SessionLocal, engine
 from app.models.action_item import ActionItem
+from app.models.meeting import Meeting, MeetingAgendaItem, MeetingDecision
+from app.models.participant import Participant
+from app.schemas.enums import ActionItemStatus, MeetingStatus, Priority
 
 
-def create_tables():
+def create_tables() -> None:
     Base.metadata.create_all(bind=engine)
 
 
-def seed_data():
+def seed_data() -> None:
     with SessionLocal() as db:
         existing_participant = db.scalar(select(Participant).limit(1))
         if existing_participant:
@@ -39,8 +41,11 @@ def seed_data():
             description="Planning tasks and feature priorities for the upcoming sprint",
             meeting_date=now,
             duration_minutes=60,
-            status="PROCESSED",
-            summary="Agreed on sprint scope and main deliverables. Next sync scheduled for Friday",
+            status=MeetingStatus.PROCESSED,
+            summary=(
+                "Agreed on sprint scope and main deliverables. "
+                "Next sync scheduled for Friday"
+            ),
             participants=[john, alice],
         )
 
@@ -71,16 +76,16 @@ def seed_data():
             assignee_id=john.id,
             title="Setup repository and base layout",
             due_date=now + timedelta(days=2),
-            status="DONE",
-            priority="HIGH",
+            status=ActionItemStatus.DONE,
+            priority=Priority.HIGH,
         )
         action2 = ActionItem(
             meeting_id=meeting.id,
             assignee_id=alice.id,
             title="Implement dashboard and navigation",
             due_date=now + timedelta(days=5),
-            status="IN_PROGRESS",
-            priority="MEDIUM",
+            status=ActionItemStatus.IN_PROGRESS,
+            priority=Priority.MEDIUM,
         )
         db.add_all([action1, action2])
 
@@ -88,7 +93,7 @@ def seed_data():
         print("Initial demo data successfully seeded into database!")
 
 
-def init_db():
+def init_db() -> None:
     create_tables()
     seed_data()
 

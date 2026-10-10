@@ -1,23 +1,25 @@
 import uuid
 from datetime import datetime
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING
+
 from sqlalchemy import (
     Column,
+    DateTime,
     ForeignKey,
     Integer,
     String,
     Table,
     Text,
-    DateTime,
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from app.db.base import Base
 
 if TYPE_CHECKING:
-    from app.models.participant import Participant
     from app.models.action_item import ActionItem
+    from app.models.participant import Participant
 
 meeting_participants = Table(
     "meeting_participants",
@@ -80,40 +82,34 @@ class Meeting(Base):
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
     )
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     meeting_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    duration_minutes: Mapped[int] = mapped_column(
-        Integer, default=30, nullable=False
-    )
-    status: Mapped[str] = mapped_column(
-        String(50), default="SCHEDULED", nullable=False
-    )
-    summary: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    transcript: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    audio_file_name: Mapped[Optional[str]] = mapped_column(
-        String(255), nullable=True
-    )
+    duration_minutes: Mapped[int] = mapped_column(Integer, default=30, nullable=False)
+    status: Mapped[str] = mapped_column(String(50), default="SCHEDULED", nullable=False)
+    summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    transcript: Mapped[str | None] = mapped_column(Text, nullable=True)
+    audio_file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    participants: Mapped[List["Participant"]] = relationship(
+    participants: Mapped[list["Participant"]] = relationship(
         secondary=meeting_participants,
         back_populates="meetings",
     )
-    agenda_items: Mapped[List["MeetingAgendaItem"]] = relationship(
+    agenda_items: Mapped[list["MeetingAgendaItem"]] = relationship(
         back_populates="meeting",
         cascade="all, delete-orphan",
         order_by="MeetingAgendaItem.order_index",
     )
-    decisions: Mapped[List["MeetingDecision"]] = relationship(
+    decisions: Mapped[list["MeetingDecision"]] = relationship(
         back_populates="meeting",
         cascade="all, delete-orphan",
         order_by="MeetingDecision.order_index",
     )
-    action_items: Mapped[List["ActionItem"]] = relationship(
+    action_items: Mapped[list["ActionItem"]] = relationship(
         back_populates="meeting",
         cascade="all, delete-orphan",
     )
