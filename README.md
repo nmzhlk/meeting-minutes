@@ -24,31 +24,68 @@ The service streamlines organizational overhead around business meetings and ens
 ## 4. Tech Stack
 
 - **Frontend:** React 19, TypeScript, Vite, Material UI
+- **Backend:** Python 3.12+, FastAPI, SQLAlchemy 2.0, PostgreSQL, Docker
 
-## 5. Local Setup & Execution
+## 5. Data Model
+
+| Entity | Description | Relationships |
+| :--- | :--- | :--- |
+| **Meeting** | Session details, AI summary, transcript, agenda, decisions | M:N with Participants, 1:N with Action Items |
+| **Participant** | Team members (name, email, role, avatar) | M:N with Meetings, 1:N with Action Items |
+| **Action Item** | Follow-up task with deadline, priority and status | Belongs to Meeting, optionally assigned to Participant |
+
+## 6. Local Setup & Execution
 
 ### Prerequisites
-- Node.js (v18+)
-- npm (v9+)
+- Node.js (v18+) & npm (v9+)
+- Python (v3.12+)
+- Docker & Docker Compose
 
-### Installation & Launch
-1. Clone the repository:
+### 1. Database Setup
+Start the PostgreSQL container:
+```bash
+docker compose up -d
+```
+The database will be available at `localhost:5432` (database: `meeting_minutes`, user: `postgres`).
+
+### 2. Backend Setup
+1. Navigate to the backend directory and set up environment variables:
    ```bash
-   git clone https://github.com/nmzhlk/meeting-minutes.git
-   cd meeting-minutes
+   cd backend
+   cp .env.example .env
    ```
-2. Navigate to the client directory and install dependencies:
-    ```bash
-    cd frontend
-    npm install
-    ```
-3. Start the Vite development server:
-    ```bash
-    npm run dev
-    ```
-4. Access the app at http://localhost:5173
+2. Create and activate a Python virtual environment:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Create database tables and seed initial demo data:
+   ```bash
+   python -m app.db.init_db
+   ```
+5. Start the backend development server:
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   ```
+   Swagger UI is available at [http://localhost:8000/docs](http://localhost:8000/docs).
 
-## 6. Screenshots
+### 3. Frontend Setup
+1. Navigate to the client directory and install dependencies:
+   ```bash
+   cd frontend
+   npm install
+   ```
+2. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+3. Access the client app at [http://localhost:5173](http://localhost:5173).
+
+## 7. Screenshots
 
 ### Meetings Dashboard (`/`)
 ![Meetings Dashboard](docs/screenshots/dashboard.png)
