@@ -56,7 +56,8 @@ export const ActionItemRow = ({ item, onStatusChange, onDelete }: ActionItemRowP
             fontWeight: 600,
             textDecoration: isDone ? 'line-through' : 'none',
             color: isDone ? 'text.secondary' : 'text.primary',
-            transition: 'color 0.2s',
+            opacity: isDone ? 0.65 : 1,
+            transition: 'color 0.25s ease, opacity 0.25s ease',
           }}
         >
           {item.title}

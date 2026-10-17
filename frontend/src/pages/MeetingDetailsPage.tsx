@@ -19,6 +19,7 @@ import {
   TableRow,
   Paper,
   Tooltip,
+  Fade,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -168,7 +169,8 @@ export const MeetingDetailsPage = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 1040, mx: 'auto' }}>
+    <Fade in={true} timeout={300}>
+      <Box sx={{ maxWidth: 1040, mx: 'auto' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Button
           component={Link}
@@ -332,7 +334,13 @@ export const MeetingDetailsPage = () => {
                   <LinearProgress
                     variant="determinate"
                     value={progressPercent}
-                    sx={{ height: 6, borderRadius: 3 }}
+                    sx={{
+                      height: 6,
+                      borderRadius: 3,
+                      '& .MuiLinearProgress-bar': {
+                        transition: 'transform 0.4s ease-in-out',
+                      },
+                    }}
                   />
                 </Box>
               )}
@@ -449,6 +457,7 @@ export const MeetingDetailsPage = () => {
         onClose={() => setIsAiDialogOpen(false)}
         onComplete={handleCompleteAIProcess}
       />
-    </Box>
+      </Box>
+    </Fade>
   );
 };

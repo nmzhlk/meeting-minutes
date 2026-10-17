@@ -101,7 +101,6 @@ export const DashboardPage = () => {
           }}
         />
       ) : (
-        <Fade in={true} timeout={400}>
           <Box
             sx={{
               display: 'grid',
@@ -109,11 +108,14 @@ export const DashboardPage = () => {
               gap: 3,
             }}
           >
-            {filteredMeetings.map((meeting) => (
-              <MeetingCard key={meeting.id} meeting={meeting} />
+            {filteredMeetings.map((meeting, idx) => (
+              <Fade in={true} timeout={300 + Math.min(idx * 90, 500)} key={meeting.id}>
+                <Box sx={{ height: '100%' }}>
+                  <MeetingCard meeting={meeting} />
+                </Box>
+              </Fade>
             ))}
           </Box>
-        </Fade>
       )}
     </Box>
   );

@@ -148,7 +148,13 @@ export const AIProcessDialog = ({
                 variant="determinate"
                 value={progress}
                 color="secondary"
-                sx={{ height: 8, borderRadius: 4 }}
+                sx={{
+                  height: 8,
+                  borderRadius: 4,
+                  '& .MuiLinearProgress-bar': {
+                    transition: 'transform 0.4s ease-out',
+                  },
+                }}
               />
             </Box>
 
@@ -170,6 +176,7 @@ export const AIProcessDialog = ({
                       p: 1.25,
                       borderRadius: 1.5,
                       bgcolor: isCurrent ? 'rgba(13, 148, 136, 0.06)' : 'transparent',
+                      transition: 'background-color 0.3s ease',
                     }}
                   >
                     {isDone ? (
@@ -188,6 +195,13 @@ export const AIProcessDialog = ({
                           fontSize: '0.75rem',
                           fontWeight: 700,
                           color: isCurrent ? 'secondary.main' : 'text.disabled',
+                          bgcolor: isCurrent ? 'rgba(13, 148, 136, 0.1)' : 'transparent',
+                          animation: isCurrent ? 'pulse-step 1.5s infinite' : 'none',
+                          '@keyframes pulse-step': {
+                            '0%': { boxShadow: '0 0 0 0 rgba(13, 148, 136, 0.5)' },
+                            '70%': { boxShadow: '0 0 0 6px rgba(13, 148, 136, 0)' },
+                            '100%': { boxShadow: '0 0 0 0 rgba(13, 148, 136, 0)' },
+                          },
                         }}
                       >
                         {idx + 1}
