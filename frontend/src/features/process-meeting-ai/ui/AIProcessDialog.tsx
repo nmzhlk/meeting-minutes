@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -38,14 +38,13 @@ export const AIProcessDialog = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    if (!open) {
-      setIsProcessing(false);
-      setCurrentStepIndex(0);
-      setProgress(0);
-    }
-  }, [open]);
+  const handleClose = () => {
+    if (isProcessing) return;
+    setIsProcessing(false);
+    setCurrentStepIndex(0);
+    setProgress(0);
+    onClose();
+  };
 
   const handleStartProcessing = () => {
     setIsProcessing(true);
@@ -66,6 +65,8 @@ export const AIProcessDialog = ({
       setProgress(100);
       await onComplete();
       setIsProcessing(false);
+      setCurrentStepIndex(0);
+      setProgress(0);
       onClose();
     }, 2100);
   };
@@ -73,7 +74,7 @@ export const AIProcessDialog = ({
   return (
     <Dialog
       open={open}
-      onClose={isProcessing ? undefined : onClose}
+      onClose={handleClose}
       maxWidth="sm"
       fullWidth
       slotProps={{
@@ -210,7 +211,7 @@ export const AIProcessDialog = ({
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
-        <Button onClick={onClose} color="inherit" disabled={isProcessing}>
+        <Button onClick={handleClose} color="inherit" disabled={isProcessing}>
           Cancel
         </Button>
         <Button

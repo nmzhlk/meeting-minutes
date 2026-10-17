@@ -1,4 +1,4 @@
-import { useState, useEffect, type SyntheticEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -32,7 +32,7 @@ export const ActionItemDialog = ({
   isSubmitting = false,
 }: ActionItemDialogProps) => {
   const [title, setTitle] = useState('');
-  const [assigneeId, setAssigneeId] = useState('');
+  const [assigneeId, setAssigneeId] = useState(() => participants[0]?.id || '');
   const [priority, setPriority] = useState<Priority>('MEDIUM');
   const [dueDate, setDueDate] = useState(() => {
     const d = new Date();
@@ -41,18 +41,11 @@ export const ActionItemDialog = ({
   });
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (open) {
-      setTitle('');
-      setError(null);
-      if (participants.length > 0) {
-        setAssigneeId(participants[0].id);
-      }
-      const d = new Date();
-      d.setDate(d.getDate() + 3);
-      setDueDate(d.toISOString().slice(0, 10));
-    }
-  }, [open, participants]);
+  const handleClose = () => {
+    setTitle('');
+    setError(null);
+    onClose();
+  };
 
   const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
@@ -78,12 +71,13 @@ export const ActionItemDialog = ({
       dueDate: new Date(dueDate).toISOString(),
       priority,
     });
+    setTitle('');
   };
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={handleClose}
       maxWidth="sm"
       fullWidth
       slotProps={{
@@ -161,7 +155,7 @@ export const ActionItemDialog = ({
         </DialogContent>
 
         <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
-          <Button onClick={onClose} color="inherit" disabled={isSubmitting}>
+          <Button onClick={handleClose} color="inherit" disabled={isSubmitting}>
             Cancel
           </Button>
           <Button type="submit" variant="contained" color="primary" disabled={isSubmitting}>

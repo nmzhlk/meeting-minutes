@@ -1,14 +1,6 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Snackbar, Alert, type AlertColor, Slide, type SlideProps } from '@mui/material';
-
-interface FeedbackContextType {
-  showSuccess: (message: string) => void;
-  showError: (message: string) => void;
-  showInfo: (message: string) => void;
-  showWarning: (message: string) => void;
-}
-
-const FeedbackContext = createContext<FeedbackContextType | undefined>(undefined);
+import { FeedbackContext } from './useFeedback';
 
 function SlideTransition(props: SlideProps) {
   return <Slide {...props} direction="up" />;
@@ -60,12 +52,4 @@ export const FeedbackProvider = ({ children }: { children: ReactNode }) => {
       </Snackbar>
     </FeedbackContext.Provider>
   );
-};
-
-export const useFeedback = (): FeedbackContextType => {
-  const context = useContext(FeedbackContext);
-  if (!context) {
-    throw new Error('useFeedback must be used within a FeedbackProvider');
-  }
-  return context;
 };

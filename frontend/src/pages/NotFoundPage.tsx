@@ -1,21 +1,22 @@
-import { Link } from 'react-router-dom';
-import { Box, Typography, Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { Box } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import FindInPageOutlinedIcon from '@mui/icons-material/FindInPageOutlined';
+import { EmptyState } from '../shared/ui';
 
 export const NotFoundPage = () => {
+  const navigate = useNavigate();
+
   return (
-    <Box sx={{ py: 10, textAlign: 'center' }}>
-      <Typography variant="h3" sx={{ fontWeight: 700, mb: 1.5 }}>
-        404
-      </Typography>
-      <Typography variant="h6" sx={{ mb: 1, color: 'text.secondary' }}>
-        Page Not Found
-      </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        The page you are looking for does not exist or has been moved
-      </Typography>
-      <Button component={Link} to="/" variant="contained">
-        Back to Dashboard
-      </Button>
+    <Box sx={{ py: 6 }}>
+      <EmptyState
+        icon={<FindInPageOutlinedIcon sx={{ fontSize: 40 }} />}
+        title="404 — Page Not Found"
+        description="The screen or session you requested does not exist or may have been relocated."
+        actionLabel="Back to Dashboard"
+        onAction={() => navigate('/')}
+        actionIcon={<ArrowBackIcon />}
+      />
     </Box>
   );
 };
