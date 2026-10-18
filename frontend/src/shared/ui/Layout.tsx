@@ -169,25 +169,6 @@ export const Layout = ({ children, onResetData }: LayoutProps) => {
         <Container maxWidth="lg">{children}</Container>
       </Box>
 
-      <Box
-        component="footer"
-        sx={{
-          py: 3,
-          px: 2,
-          mt: 'auto',
-          borderTop: 1,
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-          textAlign: 'center',
-        }}
-      >
-        <Container maxWidth="lg">
-          <Typography variant="body2" color="text.secondary">
-            Meeting Minutes Assistant • Fullstack Course Project (Lab #3 Frontend Architecture)
-          </Typography>
-        </Container>
-      </Box>
-
       <ConfirmDialog
         open={resetDialogOpen}
         title="Reset Demo Data?"
