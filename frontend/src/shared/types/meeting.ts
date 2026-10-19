@@ -17,7 +17,7 @@ export interface ActionItem {
   meetingId: string;
   title: string;
   assignee: Participant;
-  dueDate: Date;
+  dueDate: string;
   status: ActionItemStatus;
   priority: Priority;
 }
@@ -26,7 +26,7 @@ export interface Meeting {
   id: string;
   title: string;
   description: string;
-  date: Date;
+  date: string;
   durationMinutes: number;
   status: MeetingStatus;
   participants: Participant[];
@@ -38,4 +38,18 @@ export interface Meeting {
   audioFileName?: string;
 }
 
-export type CreateMeetingInput = Omit<Meeting, 'id' | 'status' | 'summary' | 'keyDecisions' | 'actionItems' | 'transcript'>;
+export type CreateMeetingInput = {
+  title: string;
+  description: string;
+  date: string;
+  durationMinutes: number;
+  participants: Participant[];
+  agenda: string[];
+};
+
+export type CreateActionItemInput = {
+  title: string;
+  assignee: Participant;
+  dueDate: string;
+  priority: Priority;
+};

@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
   AppBar,
@@ -9,21 +9,33 @@ import {
   Button,
   Avatar,
   Tooltip,
+  IconButton,
 } from '@mui/material';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import AddIcon from '@mui/icons-material/Add';
 import DashboardIcon from '@mui/icons-material/Dashboard';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface LayoutProps {
   children: ReactNode;
+  onResetData?: () => void;
 }
 
-export const Layout = ({ children }: LayoutProps) => {
+export const Layout = ({ children, onResetData }: LayoutProps) => {
   const location = useLocation();
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   const isCurrent = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
+  };
+
+  const handleConfirmReset = () => {
+    setResetDialogOpen(false);
+    if (onResetData) {
+      onResetData();
+    }
   };
 
   return (
@@ -32,7 +44,7 @@ export const Layout = ({ children }: LayoutProps) => {
         position="sticky"
         color="inherit"
         elevation={0}
-        sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
+        sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper', zIndex: 1100 }}
       >
         <Container maxWidth="lg">
           <Toolbar disableGutters sx={{ justifyContent: 'space-between', height: 70 }}>
@@ -45,9 +57,14 @@ export const Layout = ({ children }: LayoutProps) => {
                 gap: 1.5,
                 textDecoration: 'none',
                 color: 'text.primary',
+                '&:hover .logo-box': {
+                  transform: 'scale(1.05)',
+                  boxShadow: '0 6px 14px rgba(37, 99, 235, 0.35)',
+                },
               }}
             >
               <Box
+                className="logo-box"
                 sx={{
                   width: 40,
                   height: 40,
@@ -58,6 +75,7 @@ export const Layout = ({ children }: LayoutProps) => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   boxShadow: '0 4px 10px rgba(37, 99, 235, 0.25)',
+                  transition: 'all 0.2s ease-in-out',
                 }}
               >
                 <EventNoteIcon fontSize="small" />
@@ -86,10 +104,14 @@ export const Layout = ({ children }: LayoutProps) => {
                 variant="text"
                 sx={{
                   fontWeight: 600,
-                  color: isCurrent('/') ? 'primary.main' : 'text.secondary',
-                  bgcolor: isCurrent('/') ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
+                  color: isCurrent('/') && location.pathname === '/' ? 'primary.main' : 'text.secondary',
+                  bgcolor:
+                    isCurrent('/') && location.pathname === '/' ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
                   '&:hover': {
-                    bgcolor: isCurrent('/') ? 'rgba(37, 99, 235, 0.12)' : 'rgba(0, 0, 0, 0.04)',
+                    bgcolor:
+                      isCurrent('/') && location.pathname === '/'
+                        ? 'rgba(37, 99, 235, 0.12)'
+                        : 'rgba(0, 0, 0, 0.04)',
                   },
                 }}
               >
@@ -112,7 +134,19 @@ export const Layout = ({ children }: LayoutProps) => {
                 </Box>
               </Button>
 
-              <Tooltip title="Organizer: John Doe">
+              {onResetData && (
+                <Tooltip title="Reset data to initial demo state">
+                  <IconButton
+                    size="small"
+                    onClick={() => setResetDialogOpen(true)}
+                    sx={{ color: 'text.secondary', border: '1px solid', borderColor: 'divider' }}
+                  >
+                    <RestartAltIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+
+              <Tooltip title="Organizer: John Doe (Team Lead)">
                 <Avatar
                   sx={{
                     width: 38,
@@ -132,10 +166,19 @@ export const Layout = ({ children }: LayoutProps) => {
       </AppBar>
 
       <Box component="main" sx={{ flexGrow: 1, py: { xs: 2.5, sm: 4 } }}>
-        <Container maxWidth="lg">
-          {children}
-        </Container>
+        <Container maxWidth="lg">{children}</Container>
       </Box>
+
+      <ConfirmDialog
+        open={resetDialogOpen}
+        title="Reset Demo Data?"
+        description="This will restore all meetings and action items to their original initial state. Any newly created or modified meetings will be overwritten."
+        confirmLabel="Reset Data"
+        cancelLabel="Cancel"
+        isDestructive={true}
+        onConfirm={handleConfirmReset}
+        onClose={() => setResetDialogOpen(false)}
+      />
     </Box>
   );
 };
