@@ -2,16 +2,17 @@ import uuid
 from typing import Any
 
 from sqlalchemy import or_, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.action_item import ActionItem
 from app.models.meeting import Meeting, MeetingAgendaItem, MeetingDecision
-from app.repositories.participant import get_participants_by_ids
+from app.repositories.user import get_users_by_ids
 from app.schemas.meeting import MeetingCreate, MeetingUpdate
 
 
 def _meeting_detail_options() -> tuple[Any, ...]:
     return (
+        joinedload(Meeting.owner),
         selectinload(Meeting.participants),
         selectinload(Meeting.agenda_items),
         selectinload(Meeting.decisions),
@@ -21,6 +22,7 @@ def _meeting_detail_options() -> tuple[Any, ...]:
 
 def _meeting_list_options() -> tuple[Any, ...]:
     return (
+        joinedload(Meeting.owner),
         selectinload(Meeting.participants),
         selectinload(Meeting.agenda_items),
         selectinload(Meeting.decisions),
@@ -63,7 +65,11 @@ def get_meetings(
     return list(db.scalars(query).all())
 
 
-def create_meeting(db: Session, obj_in: MeetingCreate) -> Meeting:
+def create_meeting(
+    db: Session,
+    obj_in: MeetingCreate,
+    owner_id: uuid.UUID | None = None,
+) -> Meeting:
     db_obj = Meeting(
         title=obj_in.title,
         description=obj_in.description,
@@ -75,10 +81,11 @@ def create_meeting(db: Session, obj_in: MeetingCreate) -> Meeting:
         summary=obj_in.summary,
         transcript=obj_in.transcript,
         audio_file_name=obj_in.audio_file_name,
+        owner_id=owner_id,
     )
 
     if obj_in.participant_ids:
-        db_obj.participants = get_participants_by_ids(db, obj_in.participant_ids)
+        db_obj.participants = get_users_by_ids(db, obj_in.participant_ids)
 
     if obj_in.agenda:
         for idx, item_text in enumerate(obj_in.agenda):
@@ -121,7 +128,7 @@ def update_meeting(db: Session, db_obj: Meeting, obj_in: MeetingUpdate) -> Meeti
         )
 
     if obj_in.participant_ids is not None:
-        db_obj.participants = get_participants_by_ids(db, obj_in.participant_ids)
+        db_obj.participants = get_users_by_ids(db, obj_in.participant_ids)
 
     if obj_in.agenda is not None:
         db_obj.agenda_items.clear()

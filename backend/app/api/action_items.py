@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, status
 from app.api.dependencies import DbSession
 from app.repositories import action_item as action_repo
 from app.repositories import meeting as meeting_repo
-from app.repositories import participant as participant_repo
+from app.repositories import user as user_repo
 from app.schemas.action_item import (
     ActionItemCreate,
     ActionItemResponse,
@@ -51,11 +51,11 @@ def create_action_item(
         )
 
     if action_in.assignee_id:
-        assignee = participant_repo.get_participant(db, action_in.assignee_id)
+        assignee = user_repo.get_user(db, action_in.assignee_id)
         if not assignee:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Participant with id '{action_in.assignee_id}' not found",
+                detail=f"User with id '{action_in.assignee_id}' not found",
             )
 
     return ActionItemResponse.model_validate(
@@ -101,11 +101,11 @@ def update_action_item(
         )
 
     if action_in.assignee_id:
-        assignee = participant_repo.get_participant(db, action_in.assignee_id)
+        assignee = user_repo.get_user(db, action_in.assignee_id)
         if not assignee:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Participant with id '{action_in.assignee_id}' not found",
+                detail=f"User with id '{action_in.assignee_id}' not found",
             )
 
     return ActionItemResponse.model_validate(

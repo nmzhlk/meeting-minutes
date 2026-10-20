@@ -5,10 +5,12 @@ from app.models.meeting import (
     MeetingDecision,
     meeting_participants,
 )
-from app.models.participant import Participant
+from app.models.refresh_token import RefreshToken
+from app.models.user import User
 
 __all__ = [
-    "Participant",
+    "User",
+    "RefreshToken",
     "Meeting",
     "MeetingAgendaItem",
     "MeetingDecision",

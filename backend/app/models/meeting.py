@@ -19,7 +19,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.action_item import ActionItem
-    from app.models.participant import Participant
+    from app.models.user import User
 
 meeting_participants = Table(
     "meeting_participants",
@@ -31,9 +31,9 @@ meeting_participants = Table(
         primary_key=True,
     ),
     Column(
-        "participant_id",
+        "user_id",
         UUID(as_uuid=True),
-        ForeignKey("participants.id", ondelete="CASCADE"),
+        ForeignKey("users.id", ondelete="CASCADE"),
         primary_key=True,
     ),
 )
@@ -91,11 +91,22 @@ class Meeting(Base):
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     transcript: Mapped[str | None] = mapped_column(Text, nullable=True)
     audio_file_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    owner_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    participants: Mapped[list["Participant"]] = relationship(
+    owner: Mapped["User | None"] = relationship(
+        "User",
+        foreign_keys=[owner_id],
+        back_populates="owned_meetings",
+    )
+    participants: Mapped[list["User"]] = relationship(
         secondary=meeting_participants,
         back_populates="meetings",
     )

@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from app.api.dependencies import DbSession
 from app.repositories import meeting as meeting_repo
-from app.repositories import participant as participant_repo
+from app.repositories import user as user_repo
 from app.schemas.enums import MeetingStatus
 from app.schemas.meeting import (
     MeetingCreate,
@@ -21,13 +21,13 @@ def _validate_participants_exist(
 ) -> None:
     if not participant_ids:
         return
-    existing = participant_repo.get_participants_by_ids(db, participant_ids)
+    existing = user_repo.get_users_by_ids(db, participant_ids)
     existing_ids = {p.id for p in existing}
     missing = [str(pid) for pid in participant_ids if pid not in existing_ids]
     if missing:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Participant(s) not found: {', '.join(missing)}",
+            detail=f"Participant user(s) not found: {', '.join(missing)}",
         )
 
 

@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.enums import ActionItemStatus, Priority
-from app.schemas.participant import ParticipantResponse
+from app.schemas.user import UserResponse
 
 
 class ActionItemBase(BaseModel):
@@ -36,6 +36,6 @@ class ActionItemResponse(ActionItemBase):
     meeting_id: uuid.UUID
     assignee_id: uuid.UUID | None = None
     created_at: datetime
-    assignee: ParticipantResponse | None = None
+    assignee: UserResponse | None = None
 
     model_config = ConfigDict(from_attributes=True)

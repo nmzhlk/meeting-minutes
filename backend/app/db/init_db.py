@@ -2,11 +2,12 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy import select
 
+from app.core.security import get_password_hash
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.models.action_item import ActionItem
 from app.models.meeting import Meeting, MeetingAgendaItem, MeetingDecision
-from app.models.participant import Participant
+from app.models.user import User
 from app.schemas.enums import ActionItemStatus, MeetingStatus, Priority
 
 
@@ -16,22 +17,27 @@ def create_tables() -> None:
 
 def seed_data() -> None:
     with SessionLocal() as db:
-        existing_participant = db.scalar(select(Participant).limit(1))
-        if existing_participant:
+        existing_user = db.scalar(select(User).limit(1))
+        if existing_user:
             print("Database already contains data, skipping seeding.")
             return
 
         now = datetime.now(timezone.utc)
+        default_password_hash = get_password_hash("Password123")
 
-        john = Participant(
+        john = User(
             name="John Doe",
             email="john@example.com",
             role="Team Lead",
+            hashed_password=default_password_hash,
+            is_active=True,
         )
-        alice = Participant(
+        alice = User(
             name="Alice Smith",
             email="alice@example.com",
             role="Developer",
+            hashed_password=default_password_hash,
+            is_active=True,
         )
         db.add_all([john, alice])
         db.flush()
@@ -46,6 +52,7 @@ def seed_data() -> None:
                 "Agreed on sprint scope and main deliverables. "
                 "Next sync scheduled for Friday"
             ),
+            owner_id=john.id,
             participants=[john, alice],
         )
 
