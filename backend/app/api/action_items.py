@@ -2,7 +2,7 @@ import uuid
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.dependencies import DbSession
+from app.api.dependencies import CurrentUser, DbSession
 from app.repositories import action_item as action_repo
 from app.repositories import meeting as meeting_repo
 from app.repositories import user as user_repo
@@ -20,6 +20,7 @@ router = APIRouter()
 @router.get("", response_model=list[ActionItemResponse])
 def list_action_items(
     db: DbSession,
+    current_user: CurrentUser,
     meeting_id: uuid.UUID | None = None,
     assignee_id: uuid.UUID | None = None,
     status: ActionItemStatus | None = None,
@@ -41,7 +42,9 @@ def list_action_items(
 
 @router.post("", response_model=ActionItemResponse, status_code=status.HTTP_201_CREATED)
 def create_action_item(
-    db: DbSession, action_in: ActionItemCreate
+    db: DbSession,
+    action_in: ActionItemCreate,
+    current_user: CurrentUser,
 ) -> ActionItemResponse:
     meeting = meeting_repo.get_meeting(db, action_in.meeting_id)
     if not meeting:
@@ -64,7 +67,11 @@ def create_action_item(
 
 
 @router.get("/{action_id}", response_model=ActionItemResponse)
-def get_action_item(db: DbSession, action_id: uuid.UUID) -> ActionItemResponse:
+def get_action_item(
+    db: DbSession,
+    action_id: uuid.UUID,
+    current_user: CurrentUser,
+) -> ActionItemResponse:
     item = action_repo.get_action_item(db, action_id)
     if not item:
         raise HTTPException(
@@ -76,7 +83,10 @@ def get_action_item(db: DbSession, action_id: uuid.UUID) -> ActionItemResponse:
 
 @router.patch("/{action_id}/status", response_model=ActionItemResponse)
 def update_action_item_status(
-    db: DbSession, action_id: uuid.UUID, status_in: ActionItemStatusUpdate
+    db: DbSession,
+    action_id: uuid.UUID,
+    status_in: ActionItemStatusUpdate,
+    current_user: CurrentUser,
 ) -> ActionItemResponse:
     item = action_repo.get_action_item(db, action_id)
     if not item:
@@ -84,6 +94,7 @@ def update_action_item_status(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Action item with id '{action_id}' not found",
         )
+
     return ActionItemResponse.model_validate(
         action_repo.update_action_item_status(db, item, status_in.status)
     )
@@ -91,13 +102,30 @@ def update_action_item_status(
 
 @router.put("/{action_id}", response_model=ActionItemResponse)
 def update_action_item(
-    db: DbSession, action_id: uuid.UUID, action_in: ActionItemUpdate
+    db: DbSession,
+    action_id: uuid.UUID,
+    action_in: ActionItemUpdate,
+    current_user: CurrentUser,
 ) -> ActionItemResponse:
     item = action_repo.get_action_item(db, action_id)
     if not item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Action item with id '{action_id}' not found",
+        )
+
+    meeting = meeting_repo.get_meeting(db, item.meeting_id)
+    is_meeting_owner = meeting and meeting.owner_id == current_user.id
+    is_assignee = item.assignee_id == current_user.id
+    if (
+        meeting
+        and meeting.owner_id is not None
+        and not is_meeting_owner
+        and not is_assignee
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to modify this action item",
         )
 
     if action_in.assignee_id:
@@ -114,12 +142,24 @@ def update_action_item(
 
 
 @router.delete("/{action_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_action_item(db: DbSession, action_id: uuid.UUID) -> None:
+def delete_action_item(
+    db: DbSession,
+    action_id: uuid.UUID,
+    current_user: CurrentUser,
+) -> None:
     item = action_repo.get_action_item(db, action_id)
     if not item:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Action item with id '{action_id}' not found",
         )
+
+    meeting = meeting_repo.get_meeting(db, item.meeting_id)
+    if meeting and meeting.owner_id is not None and meeting.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to delete this action item",
+        )
+
     action_repo.delete_action_item(db, item)
     return None
