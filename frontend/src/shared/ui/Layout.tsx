@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useState, type ReactNode, type MouseEvent } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -10,21 +10,41 @@ import {
   Avatar,
   Tooltip,
   IconButton,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Divider,
+  Chip,
 } from '@mui/material';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import AddIcon from '@mui/icons-material/Add';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
+import LogoutIcon from '@mui/icons-material/Logout';
+import LoginIcon from '@mui/icons-material/Login';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useAuth } from '../../features/auth';
 
 interface LayoutProps {
   children: ReactNode;
   onResetData?: () => void;
 }
 
+const getInitials = (name?: string): string => {
+  if (!name) return 'U';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+};
+
 export const Layout = ({ children, onResetData }: LayoutProps) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, isAuthenticated, logout } = useAuth();
+
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
 
   const isCurrent = (path: string) => {
     if (path === '/') return location.pathname === '/';
@@ -36,6 +56,20 @@ export const Layout = ({ children, onResetData }: LayoutProps) => {
     if (onResetData) {
       onResetData();
     }
+  };
+
+  const handleOpenUserMenu = (event: MouseEvent<HTMLElement>) => {
+    setUserMenuAnchor(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setUserMenuAnchor(null);
+  };
+
+  const handleLogout = async () => {
+    handleCloseUserMenu();
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -97,45 +131,49 @@ export const Layout = ({ children, onResetData }: LayoutProps) => {
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 2 } }}>
-              <Button
-                component={Link}
-                to="/"
-                startIcon={<DashboardIcon />}
-                variant="text"
-                sx={{
-                  fontWeight: 600,
-                  color: isCurrent('/') && location.pathname === '/' ? 'primary.main' : 'text.secondary',
-                  bgcolor:
-                    isCurrent('/') && location.pathname === '/' ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
-                  '&:hover': {
-                    bgcolor:
-                      isCurrent('/') && location.pathname === '/'
-                        ? 'rgba(37, 99, 235, 0.12)'
-                        : 'rgba(0, 0, 0, 0.04)',
-                  },
-                }}
-              >
-                Dashboard
-              </Button>
+              {isAuthenticated && (
+                <>
+                  <Button
+                    component={Link}
+                    to="/"
+                    startIcon={<DashboardIcon />}
+                    variant="text"
+                    sx={{
+                      fontWeight: 600,
+                      color: isCurrent('/') && location.pathname === '/' ? 'primary.main' : 'text.secondary',
+                      bgcolor:
+                        isCurrent('/') && location.pathname === '/' ? 'rgba(37, 99, 235, 0.08)' : 'transparent',
+                      '&:hover': {
+                        bgcolor:
+                          isCurrent('/') && location.pathname === '/'
+                            ? 'rgba(37, 99, 235, 0.12)'
+                            : 'rgba(0, 0, 0, 0.04)',
+                      },
+                    }}
+                  >
+                    Dashboard
+                  </Button>
 
-              <Button
-                component={Link}
-                to="/meetings/create"
-                variant={isCurrent('/meetings/create') ? 'outlined' : 'contained'}
-                color="primary"
-                startIcon={<AddIcon />}
-                sx={{ px: { xs: 1.5, sm: 2.5 } }}
-              >
-                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-                  Schedule a Meeting
-                </Box>
-                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-                  New
-                </Box>
-              </Button>
+                  <Button
+                    component={Link}
+                    to="/meetings/create"
+                    variant={isCurrent('/meetings/create') ? 'outlined' : 'contained'}
+                    color="primary"
+                    startIcon={<AddIcon />}
+                    sx={{ px: { xs: 1.5, sm: 2.5 } }}
+                  >
+                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                      Schedule a Meeting
+                    </Box>
+                    <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                      New
+                    </Box>
+                  </Button>
+                </>
+              )}
 
               {onResetData && (
-                <Tooltip title="Reset data to initial demo state">
+                <Tooltip title="Reset to demo data">
                   <IconButton
                     size="small"
                     onClick={() => setResetDialogOpen(true)}
@@ -146,20 +184,89 @@ export const Layout = ({ children, onResetData }: LayoutProps) => {
                 </Tooltip>
               )}
 
-              <Tooltip title="Organizer: John Doe (Team Lead)">
-                <Avatar
-                  sx={{
-                    width: 38,
-                    height: 38,
-                    bgcolor: 'secondary.main',
-                    fontSize: '0.875rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                  }}
-                >
-                  JD
-                </Avatar>
-              </Tooltip>
+              {isAuthenticated && user ? (
+                <>
+                  <Tooltip title={`${user.name} (${user.role})`}>
+                    <Avatar
+                      onClick={handleOpenUserMenu}
+                      src={user.avatarUrl}
+                      sx={{
+                        width: 38,
+                        height: 38,
+                        bgcolor: 'secondary.main',
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s',
+                        '&:hover': { transform: 'scale(1.08)' },
+                      }}
+                    >
+                      {getInitials(user.name)}
+                    </Avatar>
+                  </Tooltip>
+                  <Menu
+                    anchorEl={userMenuAnchor}
+                    open={Boolean(userMenuAnchor)}
+                    onClose={handleCloseUserMenu}
+                    transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                    anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                    slotProps={{
+                      paper: {
+                        sx: {
+                          mt: 1,
+                          minWidth: 220,
+                          borderRadius: 2,
+                          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
+                        },
+                      },
+                    }}
+                  >
+                    <Box sx={{ px: 2, py: 1.5 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }} noWrap>
+                        {user.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
+                        {user.email}
+                      </Typography>
+                      <Chip
+                        label={user.role}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                        sx={{ mt: 1, height: 20, fontSize: '0.7rem' }}
+                      />
+                    </Box>
+                    <Divider />
+                    <MenuItem onClick={handleLogout} sx={{ color: 'error.main', py: 1 }}>
+                      <ListItemIcon sx={{ color: 'error.main' }}>
+                        <LogoutIcon fontSize="small" />
+                      </ListItemIcon>
+                      Sign Out
+                    </MenuItem>
+                  </Menu>
+                </>
+              ) : (
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    component={Link}
+                    to="/login"
+                    variant="text"
+                    startIcon={<LoginIcon />}
+                    size="small"
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    component={Link}
+                    to="/register"
+                    variant="contained"
+                    startIcon={<PersonAddIcon />}
+                    size="small"
+                  >
+                    Sign Up
+                  </Button>
+                </Box>
+              )}
             </Box>
           </Toolbar>
         </Container>

@@ -5,3 +5,4 @@ export * from './MeetingDetailsSkeleton';
 export * from './FeedbackSnackbar';
 export * from './useFeedback';
 export * from './Layout';
+export * from './ProtectedRoute';
