@@ -1,16 +1,12 @@
+import type { Participant, User } from './user';
+
 export type MeetingStatus = 'SCHEDULED' | 'RECORDED' | 'PROCESSED' | 'COMPLETED';
 
 export type ActionItemStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH';
 
-export interface Participant {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatarUrl?: string;
-}
+export type { Participant };
 
 export interface ActionItem {
   id: string;
@@ -29,6 +25,8 @@ export interface Meeting {
   date: string;
   durationMinutes: number;
   status: MeetingStatus;
+  ownerId?: string;
+  owner?: User;
   participants: Participant[];
   agenda: string[];
   summary?: string;
