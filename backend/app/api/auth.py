@@ -4,7 +4,9 @@ from app.api.dependencies import CurrentUser, DbSession
 from app.core.config import settings
 from app.core.security import (
     create_access_token,
-    generate_refresh_token,
+    create_refresh_token,
+    decode_refresh_token,
+    extract_token_payload,
     get_refresh_token_expiration,
     verify_password,
 )
@@ -35,11 +37,12 @@ def register(db: DbSession, user_in: UserCreate) -> TokenResponse:
 
     user = user_repo.create_user(db, user_in)
     access_token = create_access_token(str(user.id))
-    refresh_token = generate_refresh_token()
+    refresh_token = create_refresh_token(str(user.id))
+    payload = extract_token_payload(refresh_token)
     refresh_repo.create_refresh_token(
         db,
         user_id=user.id,
-        token=refresh_token,
+        payload=payload,
         expires_at=get_refresh_token_expiration(),
     )
 
@@ -69,11 +72,12 @@ def login(db: DbSession, login_in: UserLogin) -> TokenResponse:
         )
 
     access_token = create_access_token(str(user.id))
-    refresh_token = generate_refresh_token()
+    refresh_token = create_refresh_token(str(user.id))
+    payload = extract_token_payload(refresh_token)
     refresh_repo.create_refresh_token(
         db,
         user_id=user.id,
-        token=refresh_token,
+        payload=payload,
         expires_at=get_refresh_token_expiration(),
     )
 
@@ -90,8 +94,32 @@ def login(db: DbSession, login_in: UserLogin) -> TokenResponse:
 def refresh_token(
     db: DbSession, refresh_in: TokenRefreshRequest
 ) -> TokenRefreshResponse:
-    token_obj = refresh_repo.get_refresh_token(db, refresh_in.refresh_token)
+    claims = decode_refresh_token(refresh_in.refresh_token)
+    if not claims:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid, expired or revoked refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        payload = extract_token_payload(refresh_in.refresh_token)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid, expired or revoked refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token_obj = refresh_repo.get_refresh_token(db, payload)
     if not token_obj or not refresh_repo.is_token_valid(token_obj):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid, expired or revoked refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if str(token_obj.user_id) != str(claims.get("sub")):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid, expired or revoked refresh token",
@@ -117,7 +145,12 @@ def refresh_token(
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout(db: DbSession, logout_in: TokenRefreshRequest) -> None:
-    token_obj = refresh_repo.get_refresh_token(db, logout_in.refresh_token)
+    try:
+        payload = extract_token_payload(logout_in.refresh_token)
+    except ValueError:
+        return None
+
+    token_obj = refresh_repo.get_refresh_token(db, payload)
     if token_obj and not token_obj.revoked:
         refresh_repo.revoke_refresh_token(db, token_obj)
     return None

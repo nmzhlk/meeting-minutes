@@ -10,12 +10,12 @@ from app.models.refresh_token import RefreshToken
 def create_refresh_token(
     db: Session,
     user_id: uuid.UUID,
-    token: str,
+    payload: str,
     expires_at: datetime,
 ) -> RefreshToken:
     db_obj = RefreshToken(
         user_id=user_id,
-        token=token,
+        payload=payload,
         expires_at=expires_at,
         revoked=False,
     )
@@ -25,8 +25,8 @@ def create_refresh_token(
     return db_obj
 
 
-def get_refresh_token(db: Session, token: str) -> RefreshToken | None:
-    return db.scalar(select(RefreshToken).where(RefreshToken.token == token))
+def get_refresh_token(db: Session, payload: str) -> RefreshToken | None:
+    return db.scalar(select(RefreshToken).where(RefreshToken.payload == payload))
 
 
 def is_token_valid(token_obj: RefreshToken | None) -> bool:

@@ -24,7 +24,7 @@ class RefreshToken(Base):
         nullable=False,
         index=True,
     )
-    token: Mapped[str] = mapped_column(
+    payload: Mapped[str] = mapped_column(
         String(512), unique=True, index=True, nullable=False
     )
     expires_at: Mapped[datetime] = mapped_column(
