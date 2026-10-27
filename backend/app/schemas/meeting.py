@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.action_item import ActionItemResponse
 from app.schemas.enums import MeetingStatus
-from app.schemas.participant import ParticipantResponse
+from app.schemas.user import UserResponse
 
 
 class AgendaItemResponse(BaseModel):
@@ -57,8 +57,10 @@ class MeetingUpdate(BaseModel):
 
 class MeetingResponse(MeetingBase):
     id: uuid.UUID
+    owner_id: uuid.UUID | None = None
     created_at: datetime
-    participants: list[ParticipantResponse] = Field(default_factory=list)
+    owner: UserResponse | None = None
+    participants: list[UserResponse] = Field(default_factory=list)
     agenda_items: list[AgendaItemResponse] = Field(default_factory=list)
     decisions: list[DecisionResponse] = Field(default_factory=list)
 

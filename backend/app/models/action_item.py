@@ -15,7 +15,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.meeting import Meeting
-    from app.models.participant import Participant
+    from app.models.user import User
 
 
 class ActionItem(Base):
@@ -32,7 +32,7 @@ class ActionItem(Base):
     )
     assignee_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("participants.id", ondelete="SET NULL"),
+        ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
@@ -47,4 +47,4 @@ class ActionItem(Base):
     )
 
     meeting: Mapped["Meeting"] = relationship(back_populates="action_items")
-    assignee: Mapped["Participant | None"] = relationship(back_populates="action_items")
+    assignee: Mapped["User | None"] = relationship(back_populates="action_items")

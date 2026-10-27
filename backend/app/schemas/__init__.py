@@ -4,6 +4,11 @@ from app.schemas.action_item import (
     ActionItemStatusUpdate,
     ActionItemUpdate,
 )
+from app.schemas.auth import (
+    TokenRefreshRequest,
+    TokenRefreshResponse,
+    TokenResponse,
+)
 from app.schemas.enums import ActionItemStatus, MeetingStatus, Priority
 from app.schemas.meeting import (
     AgendaItemResponse,
@@ -13,27 +18,32 @@ from app.schemas.meeting import (
     MeetingResponse,
     MeetingUpdate,
 )
-from app.schemas.participant import (
-    ParticipantCreate,
-    ParticipantResponse,
-    ParticipantUpdate,
+from app.schemas.user import (
+    UserCreate,
+    UserLogin,
+    UserResponse,
+    UserUpdate,
 )
 
 __all__ = [
     "MeetingStatus",
     "ActionItemStatus",
     "Priority",
-    "ParticipantCreate",
-    "ParticipantUpdate",
-    "ParticipantResponse",
-    "ActionItemCreate",
-    "ActionItemUpdate",
-    "ActionItemStatusUpdate",
-    "ActionItemResponse",
+    "UserCreate",
+    "UserLogin",
+    "UserResponse",
+    "UserUpdate",
+    "TokenResponse",
+    "TokenRefreshRequest",
+    "TokenRefreshResponse",
     "AgendaItemResponse",
     "DecisionResponse",
     "MeetingCreate",
     "MeetingUpdate",
     "MeetingResponse",
     "MeetingDetailResponse",
+    "ActionItemCreate",
+    "ActionItemUpdate",
+    "ActionItemStatusUpdate",
+    "ActionItemResponse",
 ]

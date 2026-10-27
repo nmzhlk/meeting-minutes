@@ -1,124 +1,124 @@
 # Meeting Minutes
 
-AI-driven meeting assistant for automated agenda planning, discussion transcription, summarization, and action item tracking.
+AI-powered assistant for organizing meetings, summarizing discussions, and tracking action items.
 
-## 1. Project Overview
+## Overview
 
-The service streamlines organizational overhead around business meetings and ensures agreements are clearly documented. It provides tools to structure upcoming meeting agendas, upload discussion recordings or transcripts, extract key decisions and executive summaries via external AI models, and manage task assignments with deadlines in a unified workflow.
+Meeting Minutes simplifies team collaboration before, during, and after meetings. The app lets organizers structure agendas, simulate AI-driven transcription and summary generation, and manage actionable tasks with deadlines and assignees in a single workspace.
 
-## 2. User Scenarios
+## Key Features
 
-1. **Agenda Planning & Scheduling:**
-   An organizer sets up a new meeting session, defines the topic, date and time, invites participants, and drafts agenda points with real-time validation to provide alignment prior to the meeting.
-2. **Interactive Dashboard & Search:**
-   Team members view all scheduled and completed meetings, inspect summary statistics, filter meetings by status, search by keywords, and reset filters dynamically.
-3. **Audio/Transcript Upload & AI Processing:**
-   Following the discussion, a team member initiates AI analysis. The system simulates audio upload, speech transcription, summary generation, key decision extraction, and automated action item assignment through a step-by-step progress indicator.
-4. **Action Items Tracking & Deadlines:**
-   Participants review the generated meeting minutes, inspect assigned action items, check due dates and priorities, add new tasks, update task progress (ToDo → In Progress → Done), and remove obsolete items.
+- **Authentication & Access Control:** Secure account registration and login with bcrypt password hashing. Sessions are handled via short-lived JWT access tokens and database-backed refresh tokens with revocation on logout.
+- **Meeting Scheduling & Ownership:** Plan upcoming meetings with dynamic agenda items and participants. The creator automatically owns the meeting with exclusive rights to update or delete it.
+- **Interactive Dashboard:** Filter meetings by status, search by keywords, view summary statistics, and track upcoming deadlines.
+- **AI Protocol & Insights (Simulation):** Simulated pipeline that processes discussion recordings into structured summaries, key decisions, and action items.
+- **Action Items Tracker:** Assign tasks, adjust priorities (Low, Medium, High), set due dates, and update progress (ToDo, In Progress, Done).
 
-## 3. Application Screens
-
-- `/` — **Meetings Dashboard:** Aggregated list of all planned and completed sessions with live search, status filtering chips, summary statistics, and loading/empty states.
-- `/meetings/create` — **Meeting Creation Form:** Interactive form for scheduling a meeting with live client-side validation, dynamic agenda builder, and participant management.
-- `/meetings/:id` — **Meeting Protocol & Insights:** Comprehensive view with meeting info, AI-generated summary, key decisions, interactive action items table, and audio upload/AI processing simulation.
-
-## 4. Tech Stack
+## Tech Stack
 
 - **Frontend:** React 19, TypeScript, Vite, Material UI v9
-- **Backend:** Python 3.12+, FastAPI, SQLAlchemy 2.0, PostgreSQL, Docker
+- **Backend:** Python, FastAPI, SQLAlchemy, PostgreSQL, PyJWT, bcrypt
+- **Infrastructure:** Docker, Docker Compose
 
-## 5. Frontend Structure 
+## Architecture & Project Structure
 
-The client application follows the Feature-Sliced Design architectural methodology, ensuring loose coupling, strict unidirectional dependencies, and maintainability across features.
+The project follows a decoupled client-server architecture with Feature-Sliced Design (FSD) on the frontend:
 
 ```
-frontend/src/
-├── app/                      # Application initialization, root providers, routing
-│   ├── App.tsx               # Route definitions and global layout wrapping
-│   └── providers/            # ThemeProvider, FeedbackProvider (toast notifications)
-├── pages/                    # Compositional route views
-│   ├── DashboardPage.tsx     # Meetings list, statistics, filters, empty/loading states
-│   ├── CreateMeetingPage.tsx # Meeting scheduling workflow
-│   ├── MeetingDetailsPage.tsx# Protocol overview, AI insights, action item management
-│   └── NotFoundPage.tsx      # 404 fallback page
-├── features/                 # User-driven business workflows and actions
-│   ├── create-meeting/       # Meeting creation form with dynamic inputs & validation
-│   ├── filter-meetings/      # Search bar, status filter chips, filter reset
-│   ├── manage-action-items/  # Action item creation modal, status toggling, deletion
-│   ├── process-meeting-ai/   # Multi-step audio upload & AI protocol generation simulation
-│   └── delete-meeting/       # Safe meeting deletion with confirmation dialog
-├── entities/                 # Domain business models and entity-specific UI
-│   ├── meeting/              # MeetingCard, MeetingStatusBadge, MeetingStatsCard, types
-│   ├── action-item/          # ActionItemRow, ActionItemStatusBadge, PriorityBadge, types
-│   └── participant/          # ParticipantAvatar, ParticipantChip, types
-└── shared/                   # Generic infrastructure and reusable components
-    ├── api/                  # meetingStorage (LocalStorage CRUD + async latency simulation)
-    ├── lib/                  # Date formatting (formatDateTime, formatDateOnly), validation rules
-    ├── theme/                # MUI dark theme configuration and typography tokens
-    └── ui/                   # Layout, EmptyState, Skeleton loaders, ConfirmDialog, FeedbackSnackbar
+meeting-minutes/
+├── backend/
+│   ├── app/
+│   │   ├── api/          # Route handlers (auth, meetings, action items, users)
+│   │   ├── core/         # Settings and security helpers (JWT, bcrypt)
+│   │   ├── db/           # Database session, base models, and seed script
+│   │   ├── models/       # SQLAlchemy models (User, Meeting, ActionItem, RefreshToken)
+│   │   ├── repositories/ # Database query operations
+│   │   └── schemas/      # Pydantic request and response schemas
+│   └── requirements.txt
+└── frontend/
+    ├── src/
+    │   ├── app/          # Root providers and router configuration
+    │   ├── pages/        # Route views (Login, Register, Dashboard, Details, Create)
+    │   ├── features/     # Feature workflows (auth context, filter, manage items)
+    │   ├── entities/     # Domain components (meeting, user, action item)
+    │   └── shared/       # Reusable UI, theme, and HTTP client with auto-refresh
+    └── package.json
 ```
 
-## 6. Data Model
+## Data Model
 
-| Entity | Description | Relationships |
-| :--- | :--- | :--- |
-| **Meeting** | Session details, AI summary, transcript, agenda, decisions | M:N with Participants, 1:N with Action Items |
-| **Participant** | Team members (name, email, role, avatar) | M:N with Meetings, 1:N with Action Items |
-| **Action Item** | Follow-up task with deadline, priority and status | Belongs to Meeting, optionally assigned to Participant |
+- **User:** Team members and system users (name, email, role, avatar URL, hashed password).
+- **RefreshToken:** Active user sessions for issuing new access tokens with revocation support.
+- **Meeting:** Session information (title, date, duration, status, AI summary, agenda, decisions) linked to an owner and participants.
+- **ActionItem:** Follow-up tasks derived from meetings, assigned to a user with priority and due date.
 
-## 7. Local Setup & Execution
+## Getting Started
 
 ### Prerequisites
+
 - Node.js (v18+) & npm (v9+)
 - Python (v3.12+)
 - Docker & Docker Compose
 
-### 1. Database Setup
-Start the PostgreSQL container:
+### 1. Database
+
+Start the PostgreSQL database container:
+
 ```bash
 docker compose up -d
 ```
-The database will be available at `localhost:5432` (database: `meeting_minutes`, user: `postgres`).
 
-### 2. Backend Setup
-1. Navigate to the backend directory and set up environment variables:
+The database will be available at `localhost:5432` (`database: meeting_minutes`, `user: postgres`).
+
+### 2. Backend
+
+1. Navigate to the backend folder and prepare environment configuration:
    ```bash
    cd backend
    cp .env.example .env
    ```
-2. Create and activate a Python virtual environment:
+
+2. Create and activate a virtual environment:
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
+
 3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
+
 4. Create database tables and seed initial demo data:
    ```bash
    python -m app.db.init_db
    ```
-5. Start the backend development server:
+
+5. Run the FastAPI development server:
    ```bash
    uvicorn app.main:app --reload --port 8000
    ```
-   Swagger UI is available at [http://localhost:8000/docs](http://localhost:8000/docs).
 
-### 3. Frontend Setup
-1. Navigate to the client directory and install dependencies:
+Swagger UI will be available at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+### 3. Frontend
+
+1. Navigate to the frontend directory:
    ```bash
    cd frontend
    npm install
    ```
+
 2. Start the Vite development server:
    ```bash
    npm run dev
    ```
-3. Access the client app at [http://localhost:5173](http://localhost:5173).
 
-## 8. Screenshots
+The application will be available at [http://localhost:5173](http://localhost:5173).
+
+> Pre-seeded accounts (`john@example.com` or `alice@example.com`, password: `Password123`) are available for demo purposes. Click the quick demo chips on the Sign In page to auto-fill credentials.
+
+## Screenshots
 
 ### Meetings Dashboard (`/`)
 ![Meetings Dashboard](docs/screenshots/dashboard.png)
