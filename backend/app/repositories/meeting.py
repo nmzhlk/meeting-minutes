@@ -10,7 +10,7 @@ from app.repositories.user import get_users_by_ids
 from app.schemas.meeting import MeetingCreate, MeetingUpdate
 
 
-def _meeting_detail_options() -> tuple[Any, ...]:
+def _meeting_options() -> tuple[Any, ...]:
     return (
         joinedload(Meeting.owner),
         selectinload(Meeting.participants),
@@ -20,19 +20,10 @@ def _meeting_detail_options() -> tuple[Any, ...]:
     )
 
 
-def _meeting_list_options() -> tuple[Any, ...]:
-    return (
-        joinedload(Meeting.owner),
-        selectinload(Meeting.participants),
-        selectinload(Meeting.agenda_items),
-        selectinload(Meeting.decisions),
-    )
-
-
 def get_meeting(db: Session, meeting_id: uuid.UUID) -> Meeting | None:
     query = (
         select(Meeting)
-        .options(*_meeting_detail_options())
+        .options(*_meeting_options())
         .where(Meeting.id == meeting_id)
     )
     return db.scalar(query)
@@ -47,7 +38,7 @@ def get_meetings(
 ) -> list[Meeting]:
     query = (
         select(Meeting)
-        .options(*_meeting_list_options())
+        .options(*_meeting_options())
         .order_by(Meeting.meeting_date.desc())
     )
     if status:

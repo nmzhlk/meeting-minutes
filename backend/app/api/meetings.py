@@ -8,7 +8,6 @@ from app.repositories import user as user_repo
 from app.schemas.enums import MeetingStatus
 from app.schemas.meeting import (
     MeetingCreate,
-    MeetingDetailResponse,
     MeetingResponse,
     MeetingUpdate,
 )
@@ -62,19 +61,19 @@ def create_meeting(
     )
 
 
-@router.get("/{meeting_id}", response_model=MeetingDetailResponse)
+@router.get("/{meeting_id}", response_model=MeetingResponse)
 def get_meeting(
     db: DbSession,
     meeting_id: uuid.UUID,
     current_user: CurrentUser,
-) -> MeetingDetailResponse:
+) -> MeetingResponse:
     meeting = meeting_repo.get_meeting(db, meeting_id)
     if not meeting:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Meeting with id '{meeting_id}' not found",
         )
-    return MeetingDetailResponse.model_validate(meeting)
+    return MeetingResponse.model_validate(meeting)
 
 
 @router.put("/{meeting_id}", response_model=MeetingResponse)
