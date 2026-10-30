@@ -29,9 +29,10 @@ import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import type { Meeting, ActionItemStatus, CreateActionItemInput } from '../shared/types';
-import { meetingStorage } from '../shared/api';
+import type { Meeting, ActionItemStatus, CreateActionItemInput, UpdateMeetingInput } from '../shared/types';
+import { meetingStorage, meetingsApi } from '../shared/api';
 import { formatDateTime } from '../shared/lib';
 import { EmptyState, MeetingDetailsSkeleton, useFeedback } from '../shared/ui';
 import { MeetingStatusBadge } from '../entities/meeting';
@@ -40,16 +41,20 @@ import { ParticipantAvatar } from '../entities/participant';
 import { ActionItemDialog } from '../features/manage-action-items';
 import { AIProcessDialog } from '../features/process-meeting-ai';
 import { DeleteMeetingButton } from '../features/delete-meeting';
+import { EditMeetingDialog } from '../features/edit-meeting';
+import { useAuth } from '../features/auth';
 
 export const MeetingDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const feedback = useFeedback();
+  const { user } = useAuth();
 
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -168,6 +173,22 @@ export const MeetingDetailsPage = () => {
     }
   };
 
+  const isOwner = Boolean(user && meeting && (!meeting.ownerId || meeting.ownerId === user.id));
+
+  const handleUpdateMeeting = async (input: UpdateMeetingInput) => {
+    if (!meeting) return;
+    try {
+      const updated = await meetingsApi.updateMeeting(meeting.id, input);
+      setMeeting((prev) => (prev ? { ...prev, ...updated } : updated));
+      feedback.showSuccess('Meeting details updated successfully!');
+      setIsEditDialogOpen(false);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update meeting';
+      feedback.showError(msg);
+      throw err;
+    }
+  };
+
   return (
     <Fade in={true} timeout={300}>
       <Box sx={{ maxWidth: 1040, mx: 'auto' }}>
@@ -181,7 +202,18 @@ export const MeetingDetailsPage = () => {
           Back to Dashboard
         </Button>
 
-        <Box sx={{ display: 'flex', gap: 1.5 }}>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+          {isOwner && (
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => setIsEditDialogOpen(true)}
+              sx={{ borderRadius: 2 }}
+            >
+              Edit Meeting
+            </Button>
+          )}
+
           {meeting.status !== 'PROCESSED' && (
             <Button
               variant="contained"
@@ -194,10 +226,12 @@ export const MeetingDetailsPage = () => {
             </Button>
           )}
 
-          <DeleteMeetingButton
-            meetingTitle={meeting.title}
-            onDelete={handleDeleteMeeting}
-          />
+          {isOwner && (
+            <DeleteMeetingButton
+              meetingTitle={meeting.title}
+              onDelete={handleDeleteMeeting}
+            />
+          )}
         </Box>
       </Box>
 
@@ -456,6 +490,13 @@ export const MeetingDetailsPage = () => {
         meetingTitle={meeting.title}
         onClose={() => setIsAiDialogOpen(false)}
         onComplete={handleCompleteAIProcess}
+      />
+
+      <EditMeetingDialog
+        open={isEditDialogOpen}
+        meeting={meeting}
+        onClose={() => setIsEditDialogOpen(false)}
+        onSubmit={handleUpdateMeeting}
       />
       </Box>
     </Fade>

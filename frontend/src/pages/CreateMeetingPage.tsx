@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Box, Typography, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import type { CreateMeetingInput } from '../shared/types';
-import { meetingStorage } from '../shared/api';
+import { meetingsApi } from '../shared/api';
 import { useFeedback } from '../shared/ui';
 import { CreateMeetingForm } from '../features/create-meeting';
 
@@ -15,11 +15,15 @@ export const CreateMeetingPage = () => {
   const handleCreateMeeting = async (input: CreateMeetingInput) => {
     setIsSubmitting(true);
     try {
-      await meetingStorage.createMeeting(input);
+      const created = await meetingsApi.createMeeting(input);
       feedback.showSuccess('Meeting scheduled successfully!');
-      navigate('/');
-    } catch {
-      feedback.showError('Failed to schedule meeting. Please try again.');
+      navigate(`/meetings/${created.id}`);
+    } catch (err: unknown) {
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Failed to schedule meeting. Please try again.';
+      feedback.showError(msg);
     } finally {
       setIsSubmitting(false);
     }
