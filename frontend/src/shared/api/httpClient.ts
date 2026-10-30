@@ -107,10 +107,25 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
       errorData = await response.json();
       if (errorData && typeof errorData === 'object' && 'detail' in errorData) {
         const detail = (errorData as { detail: unknown }).detail;
-        errorMessage = typeof detail === 'string' ? detail : JSON.stringify(detail);
+        if (typeof detail === 'string') {
+          errorMessage = detail;
+        } else if (Array.isArray(detail)) {
+          errorMessage = detail
+            .map((item) => {
+              if (item && typeof item === 'object' && 'msg' in item) {
+                const loc = Array.isArray(item.loc)
+                  ? item.loc.filter((part: unknown) => part !== 'body').join('.')
+                  : '';
+                return loc ? `${loc}: ${item.msg}` : String(item.msg);
+              }
+              return JSON.stringify(item);
+            })
+            .join('; ');
+        } else {
+          errorMessage = JSON.stringify(detail);
+        }
       }
     } catch {
-      // Ignore if response is not JSON
     }
     throw new ApiError(response.status, errorMessage, errorData);
   }

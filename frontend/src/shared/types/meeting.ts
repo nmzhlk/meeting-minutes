@@ -12,42 +12,72 @@ export interface ActionItem {
   id: string;
   meetingId: string;
   title: string;
-  assignee: Participant;
-  dueDate: string;
+  assigneeId?: string | null;
+  assignee?: Participant | null;
+  dueDate?: string | null;
   status: ActionItemStatus;
   priority: Priority;
+  createdAt?: string;
 }
 
 export interface Meeting {
   id: string;
   title: string;
-  description: string;
+  description?: string | null;
   date: string;
   durationMinutes: number;
   status: MeetingStatus;
-  ownerId?: string;
-  owner?: User;
+  ownerId?: string | null;
+  owner?: User | null;
   participants: Participant[];
   agenda: string[];
-  summary?: string;
+  summary?: string | null;
   keyDecisions?: string[];
   actionItems?: ActionItem[];
-  transcript?: string;
-  audioFileName?: string;
+  transcript?: string | null;
+  audioFileName?: string | null;
+  createdAt?: string;
 }
 
 export type CreateMeetingInput = {
   title: string;
-  description: string;
+  description?: string | null;
   date: string;
   durationMinutes: number;
   participants: Participant[];
   agenda: string[];
+  decisions?: string[];
+  participantIds?: string[];
+};
+
+export type UpdateMeetingInput = {
+  title?: string;
+  description?: string | null;
+  date?: string;
+  durationMinutes?: number;
+  status?: MeetingStatus;
+  summary?: string | null;
+  transcript?: string | null;
+  audioFileName?: string | null;
+  participantIds?: string[];
+  agenda?: string[];
+  decisions?: string[];
 };
 
 export type CreateActionItemInput = {
   title: string;
-  assignee: Participant;
-  dueDate: string;
-  priority: Priority;
+  meetingId?: string;
+  assigneeId?: string | null;
+  assignee?: Participant | null;
+  dueDate?: string | null;
+  status?: ActionItemStatus;
+  priority?: Priority;
+};
+
+export type UpdateActionItemInput = {
+  title?: string;
+  dueDate?: string | null;
+  status?: ActionItemStatus;
+  priority?: Priority;
+  assigneeId?: string | null;
 };

@@ -67,6 +67,7 @@ export const ActionItemDialog = ({
 
     await onSubmit({
       title: title.trim(),
+      assigneeId: selectedAssignee.id,
       assignee: selectedAssignee,
       dueDate: new Date(dueDate).toISOString(),
       priority,

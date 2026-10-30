@@ -65,12 +65,18 @@ export const ActionItemRow = ({ item, onStatusChange, onDelete }: ActionItemRowP
       </TableCell>
 
       <TableCell sx={{ width: 160 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <ParticipantAvatar participant={item.assignee} size={28} />
-          <Typography variant="body2" sx={{ fontSize: '0.85rem' }} noWrap>
-            {item.assignee.name}
+        {item.assignee ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ParticipantAvatar participant={item.assignee} size={28} />
+            <Typography variant="body2" sx={{ fontSize: '0.85rem' }} noWrap>
+              {item.assignee.name}
+            </Typography>
+          </Box>
+        ) : (
+          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+            Unassigned
           </Typography>
-        </Box>
+        )}
       </TableCell>
 
       <TableCell sx={{ width: 120 }}>
@@ -79,7 +85,7 @@ export const ActionItemRow = ({ item, onStatusChange, onDelete }: ActionItemRowP
 
       <TableCell sx={{ width: 120 }}>
         <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
-          {formatDate(item.dueDate)}
+          {formatDate(item.dueDate) || 'No deadline'}
         </Typography>
       </TableCell>
 

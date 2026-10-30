@@ -189,7 +189,7 @@ export const Layout = ({ children, onResetData }: LayoutProps) => {
                   <Tooltip title={`${user.name} (${user.role})`}>
                     <Avatar
                       onClick={handleOpenUserMenu}
-                      src={user.avatarUrl}
+                      src={user.avatarUrl || undefined}
                       sx={{
                         width: 38,
                         height: 38,

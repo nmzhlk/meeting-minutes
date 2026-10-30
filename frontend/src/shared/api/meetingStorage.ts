@@ -183,7 +183,7 @@ export const meetingStorage = {
       assignee: input.assignee,
       dueDate: input.dueDate,
       status: 'TODO',
-      priority: input.priority,
+      priority: input.priority || 'MEDIUM',
     };
 
     if (!meeting.actionItems) {

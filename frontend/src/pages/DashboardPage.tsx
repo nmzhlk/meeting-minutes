@@ -31,7 +31,7 @@ export const DashboardPage = () => {
   const filteredMeetings = meetings.filter((m) => {
     const matchesSearch =
       m.title.toLowerCase().includes(search.toLowerCase()) ||
-      m.description.toLowerCase().includes(search.toLowerCase());
+      (m.description || '').toLowerCase().includes(search.toLowerCase());
     const matchesStatus =
       statusFilter === 'ALL' || m.status === (statusFilter as MeetingStatus);
     return matchesSearch && matchesStatus;
