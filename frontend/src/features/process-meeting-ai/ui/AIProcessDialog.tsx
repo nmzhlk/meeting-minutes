@@ -63,11 +63,15 @@ export const AIProcessDialog = ({
 
     setTimeout(async () => {
       setProgress(100);
-      await onComplete();
-      setIsProcessing(false);
-      setCurrentStepIndex(0);
-      setProgress(0);
-      onClose();
+      try {
+        await onComplete();
+        setIsProcessing(false);
+        setCurrentStepIndex(0);
+        setProgress(0);
+        onClose();
+      } catch {
+        setIsProcessing(false);
+      }
     }, 2100);
   };
 

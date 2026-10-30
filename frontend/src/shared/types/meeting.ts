@@ -62,6 +62,7 @@ export type UpdateMeetingInput = {
   participantIds?: string[];
   agenda?: string[];
   decisions?: string[];
+  keyDecisions?: string[];
 };
 
 export type CreateActionItemInput = {

@@ -192,7 +192,8 @@ export const mapUpdateMeetingToDto = (input: UpdateMeetingInput): MeetingUpdateD
   if (input.audioFileName !== undefined) dto.audio_file_name = input.audioFileName;
   if (input.participantIds !== undefined) dto.participant_ids = input.participantIds;
   if (input.agenda !== undefined) dto.agenda = input.agenda;
-  if (input.decisions !== undefined) dto.decisions = input.decisions;
+  const decisions = input.decisions ?? input.keyDecisions;
+  if (decisions !== undefined) dto.decisions = decisions;
 
   return dto;
 };

@@ -1,4 +1,4 @@
-import { useState, type SyntheticEvent } from 'react';
+import { useState, useEffect, type SyntheticEvent } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,9 +12,11 @@ import {
   MenuItem,
   Box,
   Typography,
+  Alert,
 } from '@mui/material';
 import type { CreateActionItemInput, Participant, Priority } from '../../../shared/types';
 import { validateActionItemTitle } from '../../../shared/lib';
+import { usersApi } from '../../../shared/api';
 
 interface ActionItemDialogProps {
   open: boolean;
@@ -24,13 +26,19 @@ interface ActionItemDialogProps {
   isSubmitting?: boolean;
 }
 
-export const ActionItemDialog = ({
-  open,
+interface ActionItemFormContentProps {
+  participants: Participant[];
+  onClose: () => void;
+  onSubmit: (input: CreateActionItemInput) => Promise<void> | void;
+  isSubmitting?: boolean;
+}
+
+const ActionItemFormContent = ({
   participants,
   onClose,
   onSubmit,
-  isSubmitting = false,
-}: ActionItemDialogProps) => {
+  isSubmitting: externalSubmitting = false,
+}: ActionItemFormContentProps) => {
   const [title, setTitle] = useState('');
   const [assigneeId, setAssigneeId] = useState(() => participants[0]?.id || '');
   const [priority, setPriority] = useState<Priority>('MEDIUM');
@@ -40,12 +48,31 @@ export const ActionItemDialog = ({
     return d.toISOString().slice(0, 10);
   });
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [fetchedUsers, setFetchedUsers] = useState<Participant[]>([]);
 
-  const handleClose = () => {
-    setTitle('');
-    setError(null);
-    onClose();
-  };
+  useEffect(() => {
+    if (participants.length > 0) return;
+    let isMounted = true;
+    usersApi
+      .getUsers()
+      .then((users) => {
+        if (isMounted) {
+          setFetchedUsers(users);
+          if (users.length > 0) {
+            setAssigneeId((prev) => prev || users[0].id);
+          }
+        }
+      })
+      .catch(() => {
+        // Keep existing list on error
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [participants.length]);
+
+  const userList = participants.length > 0 ? participants : fetchedUsers;
 
   const handleSubmit = async (e: SyntheticEvent) => {
     e.preventDefault();
@@ -56,29 +83,135 @@ export const ActionItemDialog = ({
       return;
     }
 
-    const selectedAssignee =
-      participants.find((p) => p.id === assigneeId) ||
-      participants[0] || {
-        id: 'p1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        role: 'Participant',
-      };
+    const selectedAssignee = assigneeId
+      ? userList.find((p) => p.id === assigneeId) || null
+      : null;
 
-    await onSubmit({
-      title: title.trim(),
-      assigneeId: selectedAssignee.id,
-      assignee: selectedAssignee,
-      dueDate: new Date(dueDate).toISOString(),
-      priority,
-    });
-    setTitle('');
+    setSubmitting(true);
+    try {
+      await onSubmit({
+        title: title.trim(),
+        assigneeId: selectedAssignee ? selectedAssignee.id : null,
+        assignee: selectedAssignee,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+        priority,
+      });
+      onClose();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to create action item';
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
+  const isBusy = submitting || externalSubmitting;
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>Add New Action Item</DialogTitle>
+      <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
+        <Typography variant="body2" color="text.secondary">
+          Assign a follow-up task with a clear owner, priority, and deadline.
+        </Typography>
+
+        {error && (
+          <Alert severity="error" sx={{ borderRadius: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <TextField
+          label="Action Item Description"
+          placeholder="e.g., Prepare slide deck for stakeholder review"
+          fullWidth
+          required
+          autoFocus
+          value={title}
+          onChange={(e) => {
+            setTitle(e.target.value);
+            if (error) setError(null);
+          }}
+          disabled={isBusy}
+          error={Boolean(error)}
+          helperText="Clear description of deliverables"
+        />
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel id="assignee-select-label">Assignee</InputLabel>
+            <Select
+              labelId="assignee-select-label"
+              value={assigneeId}
+              label="Assignee"
+              onChange={(e) => setAssigneeId(e.target.value)}
+              disabled={isBusy}
+            >
+              <MenuItem value="">
+                <em>Unassigned</em>
+              </MenuItem>
+              {userList.map((p) => (
+                <MenuItem key={p.id} value={p.id}>
+                  {p.name} ({p.role || p.email})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth size="small">
+            <InputLabel id="priority-select-label">Priority</InputLabel>
+            <Select
+              labelId="priority-select-label"
+              value={priority}
+              label="Priority"
+              onChange={(e) => setPriority(e.target.value as Priority)}
+              disabled={isBusy}
+            >
+              <MenuItem value="LOW">Low</MenuItem>
+              <MenuItem value="MEDIUM">Medium</MenuItem>
+              <MenuItem value="HIGH">High Priority</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+
+        <TextField
+          label="Due Date"
+          type="date"
+          fullWidth
+          size="small"
+          required
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          disabled={isBusy}
+          slotProps={{
+            inputLabel: { shrink: true },
+          }}
+        />
+      </DialogContent>
+
+      <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
+        <Button onClick={onClose} color="inherit" disabled={isBusy}>
+          Cancel
+        </Button>
+        <Button type="submit" variant="contained" color="primary" disabled={isBusy}>
+          {isBusy ? 'Adding...' : 'Add Task'}
+        </Button>
+      </DialogActions>
+    </form>
+  );
+};
+
+export const ActionItemDialog = ({
+  open,
+  participants,
+  onClose,
+  onSubmit,
+  isSubmitting = false,
+}: ActionItemDialogProps) => {
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={onClose}
       maxWidth="sm"
       fullWidth
       slotProps={{
@@ -87,83 +220,14 @@ export const ActionItemDialog = ({
         },
       }}
     >
-      <form onSubmit={handleSubmit}>
-        <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>Add New Action Item</DialogTitle>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
-          <Typography variant="body2" color="text.secondary">
-            Assign a follow-up task with a clear owner, priority, and deadline.
-          </Typography>
-
-          <TextField
-            label="Action Item Description"
-            placeholder="e.g., Prepare slide deck for stakeholder review"
-            fullWidth
-            required
-            autoFocus
-            value={title}
-            onChange={(e) => {
-              setTitle(e.target.value);
-              if (error) setError(null);
-            }}
-            error={Boolean(error)}
-            helperText={error || 'Clear description of deliverables'}
-          />
-
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-            <FormControl fullWidth size="small">
-              <InputLabel id="assignee-select-label">Assignee</InputLabel>
-              <Select
-                labelId="assignee-select-label"
-                value={assigneeId}
-                label="Assignee"
-                onChange={(e) => setAssigneeId(e.target.value)}
-              >
-                {participants.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
-                    {p.name} ({p.role || 'Member'})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl fullWidth size="small">
-              <InputLabel id="priority-select-label">Priority</InputLabel>
-              <Select
-                labelId="priority-select-label"
-                value={priority}
-                label="Priority"
-                onChange={(e) => setPriority(e.target.value as Priority)}
-              >
-                <MenuItem value="LOW">Low</MenuItem>
-                <MenuItem value="MEDIUM">Medium</MenuItem>
-                <MenuItem value="HIGH">High Priority</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          <TextField
-            label="Due Date"
-            type="date"
-            fullWidth
-            size="small"
-            required
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-            slotProps={{
-              inputLabel: { shrink: true },
-            }}
-          />
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2, pt: 1 }}>
-          <Button onClick={handleClose} color="inherit" disabled={isSubmitting}>
-            Cancel
-          </Button>
-          <Button type="submit" variant="contained" color="primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Adding...' : 'Add Task'}
-          </Button>
-        </DialogActions>
-      </form>
+      {open && (
+        <ActionItemFormContent
+          participants={participants}
+          onClose={onClose}
+          onSubmit={onSubmit}
+          isSubmitting={isSubmitting}
+        />
+      )}
     </Dialog>
   );
 };
