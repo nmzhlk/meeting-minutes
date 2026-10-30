@@ -126,6 +126,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
         }
       }
     } catch {
+      // Response is not JSON; keep fallback status error message
     }
     throw new ApiError(response.status, errorMessage, errorData);
   }
