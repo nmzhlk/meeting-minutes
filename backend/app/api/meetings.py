@@ -125,3 +125,27 @@ def delete_meeting(
 
     meeting_repo.delete_meeting(db, meeting)
     return None
+
+
+@router.post("/{meeting_id}/process-ai", response_model=MeetingResponse)
+def process_meeting_ai(
+    db: DbSession,
+    meeting_id: uuid.UUID,
+    current_user: CurrentUser,
+) -> MeetingResponse:
+    meeting = meeting_repo.get_meeting(db, meeting_id)
+    if not meeting:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Meeting with id '{meeting_id}' not found",
+        )
+
+    if meeting.owner_id is not None and meeting.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to modify this meeting",
+        )
+
+    return MeetingResponse.model_validate(
+        meeting_repo.process_meeting_ai(db, meeting)
+    )

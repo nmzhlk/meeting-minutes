@@ -62,4 +62,9 @@ export const meetingsApi = {
   async deleteMeeting(id: string): Promise<void> {
     await httpClient.delete<void>(`/meetings/${id}`);
   },
+
+  async processMeetingAI(id: string): Promise<Meeting> {
+    const data = await httpClient.post<MeetingDto>(`/meetings/${id}/process-ai`);
+    return mapMeetingFromDto(data);
+  },
 };

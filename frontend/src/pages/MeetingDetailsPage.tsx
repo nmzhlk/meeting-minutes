@@ -177,41 +177,7 @@ export const MeetingDetailsPage = () => {
   const handleCompleteAIProcess = async () => {
     if (!meeting) return;
     try {
-      await meetingsApi.updateMeeting(meeting.id, {
-        status: 'PROCESSED',
-        summary:
-          'Key agenda items were comprehensively analyzed. Team members reached consensus on architectural constraints, assigned ownership for integration endpoints, and set up the delivery milestone.',
-        decisions: [
-          'Approved technical specifications for asynchronous processing',
-          'Confirmed schedule for frontend interactive milestone',
-          'Configured automated validation rules across all user inputs',
-        ],
-      });
-
-      const defaultAssigneeId = meeting.participants[0]?.id || user?.id || null;
-      const dueDate1 = new Date(Date.now() + 86400000 * 3).toISOString();
-      const dueDate2 = new Date(Date.now() + 86400000 * 7).toISOString();
-
-      try {
-        await actionItemsApi.createActionItem({
-          meetingId: meeting.id,
-          title: 'Review extracted AI protocol and notify team stakeholders',
-          assigneeId: defaultAssigneeId,
-          dueDate: dueDate1,
-          priority: 'HIGH',
-        });
-        await actionItemsApi.createActionItem({
-          meetingId: meeting.id,
-          title: 'Prepare integration test report for stage review',
-          assigneeId: defaultAssigneeId,
-          dueDate: dueDate2,
-          priority: 'MEDIUM',
-        });
-      } catch (actionErr) {
-        console.warn('Failed to auto-create generated action items:', actionErr);
-      }
-
-      const refreshed = await meetingsApi.getMeetingById(meeting.id);
+      const refreshed = await meetingsApi.processMeetingAI(meeting.id);
       setMeeting(refreshed);
       feedback.showSuccess('AI protocol, summary, and action items generated and saved');
     } catch (err: unknown) {
