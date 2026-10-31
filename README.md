@@ -1,18 +1,25 @@
 # Meeting Minutes
 
-AI-powered assistant for organizing meetings, summarizing discussions, and tracking action items.
-
-## Overview
-
-Meeting Minutes simplifies team collaboration before, during, and after meetings. The app lets organizers structure agendas, simulate AI-driven transcription and summary generation, and manage actionable tasks with deadlines and assignees in a single workspace.
+Meeting Minutes is a workspace for organizing discussions, generating meeting summaries, and tracking team action items.
 
 ## Key Features
 
-- **Authentication & Access Control:** Secure account registration and login with bcrypt password hashing. Sessions are handled via short-lived JWT access tokens and database-backed refresh tokens with revocation on logout.
-- **Meeting Scheduling & Ownership:** Plan upcoming meetings with dynamic agenda items and participants. The creator automatically owns the meeting with exclusive rights to update or delete it.
-- **Interactive Dashboard:** Filter meetings by status, search by keywords, view summary statistics, and track upcoming deadlines.
-- **AI Protocol & Insights (Simulation):** Simulated pipeline that processes discussion recordings into structured summaries, key decisions, and action items.
-- **Action Items Tracker:** Assign tasks, adjust priorities (Low, Medium, High), set due dates, and update progress (ToDo, In Progress, Done).
+- **Authentication & RBAC:** JWT authentication with refresh token rotation and role-based permissions (Organizer, Attendee).
+- **Meeting Management:** Agenda builder, attendee selection, and full ownership control for organizers.
+- **Interactive Dashboard:** Filter meetings by status, search by keywords, view summary statistics, and track deadlines.
+- **AI Protocol Generation:** Generates meeting minutes, action items, and meeting outcomes from meeting discussions.
+- **Action Items Tracker:** Task assignment, priority levels, deadlines, and inline status toggling.
+
+## Screenshots
+
+### Meetings Dashboard (`/`)
+![Meetings Dashboard](docs/screenshots/dashboard.png)
+
+### Meeting Details (`/meetings/:id`)
+![Meeting Details](docs/screenshots/meeting_details.png)
+
+### Create Meeting Form (`/meetings/create`)
+![Create Meeting Form](docs/screenshots/create_meeting.png)
 
 ## Tech Stack
 
@@ -47,12 +54,12 @@ meeting-minutes/
 
 ## Data Model
 
-- **User:** Team members and system users (name, email, role, avatar URL, hashed password).
-- **RefreshToken:** Active user sessions for issuing new access tokens with revocation support.
-- **Meeting:** Session information (title, date, duration, status, AI summary, agenda, decisions) linked to an owner and participants.
-- **ActionItem:** Follow-up tasks derived from meetings, assigned to a user with priority and due date.
+- **User:** Team accounts with role, avatar, and credentials.
+- **RefreshToken:** Active sessions with revocation support.
+- **Meeting:** Agendas, summaries, and decisions linked to owner and attendees.
+- **ActionItem:** Follow-up tasks with assignees, priorities, and deadlines.
 
-## Getting Started
+## Getting Started Locally
 
 ### Prerequisites
 
@@ -68,11 +75,11 @@ Start the PostgreSQL database container:
 docker compose up -d
 ```
 
-The database will be available at `localhost:5432` (`database: meeting_minutes`, `user: postgres`).
+Database connection: `localhost:5432` (`database: meeting_minutes`, `user: postgres`, `password: postgres`).
 
 ### 2. Backend
 
-1. Navigate to the backend folder and prepare environment configuration:
+1. Navigate to the backend directory and prepare .env file:
    ```bash
    cd backend
    cp .env.example .env
@@ -94,12 +101,12 @@ The database will be available at `localhost:5432` (`database: meeting_minutes`,
    python -m app.db.init_db
    ```
 
-5. Run the FastAPI development server:
+5. Start the FastAPI server:
    ```bash
    uvicorn app.main:app --reload --port 8000
    ```
 
-Swagger UI will be available at [http://localhost:8000/docs](http://localhost:8000/docs).
+Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ### 3. Frontend
 
@@ -109,22 +116,33 @@ Swagger UI will be available at [http://localhost:8000/docs](http://localhost:80
    npm install
    ```
 
-2. Start the Vite development server:
+2. Start the Vite server:
    ```bash
    npm run dev
    ```
 
-The application will be available at [http://localhost:5173](http://localhost:5173).
+App: [http://localhost:5173](http://localhost:5173)
 
-> Pre-seeded accounts (`john@example.com` or `alice@example.com`, password: `Password123`) are available for demo purposes. Click the quick demo chips on the Sign In page to auto-fill credentials.
+### Demo Accounts
 
-## Screenshots
+| User | Password | Role | Access Level |
+| :--- | :--- | :--- | :--- |
+| `john@example.com` | `Password123` | Team Lead | Organizer (create, edit, delete, run AI) |
+| `alice@example.com` | `Password123` | Developer | Attendee (view meetings, update assigned tasks) |
 
-### Meetings Dashboard (`/`)
-![Meetings Dashboard](docs/screenshots/dashboard.png)
 
-### Meeting Creation Form (`/meetings/create`)
-![Meeting Creation Form](docs/screenshots/create_meeting.png)
+## Code Quality
 
-### Meeting Protocol & Action Items (`/meetings/:id`)
-![Meeting Protocol & Insights](docs/screenshots/meeting_details.png)
+Run static analysis and build checks:
+
+```bash
+# Frontend (ESLint & TypeScript build)
+cd frontend
+npm run lint
+npm run build
+
+# Backend (Ruff linter & MyPy type check)
+cd backend
+ruff check app
+mypy app
+```

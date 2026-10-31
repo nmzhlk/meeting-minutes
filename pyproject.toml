@@ -24,8 +24,6 @@ indent-style = "space"
 
 [tool.mypy]
 python_version = "3.12"
-python_executable = "backend/venv/bin/python"
-
 strict = true
 
 ignore_missing_imports = true
