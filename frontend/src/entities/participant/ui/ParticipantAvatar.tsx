@@ -7,17 +7,19 @@ interface ParticipantAvatarProps {
 }
 
 export const ParticipantAvatar = ({ participant, size = 32 }: ParticipantAvatarProps) => {
-  const initials = participant.name
-    .split(' ')
+  const name = participant?.name || 'User';
+  const initials = name
+    .trim()
+    .split(/\s+/)
     .map((n) => n[0])
     .join('')
     .slice(0, 2)
-    .toUpperCase();
+    .toUpperCase() || 'U';
 
   return (
-    <Tooltip title={`${participant.name} (${participant.role || 'Participant'})`}>
+    <Tooltip title={`${name} (${participant?.role || 'Participant'})`}>
       <Avatar
-        src={participant.avatarUrl}
+        src={participant?.avatarUrl || undefined}
         sx={{
           width: size,
           height: size,

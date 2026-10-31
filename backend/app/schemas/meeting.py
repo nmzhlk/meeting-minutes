@@ -63,9 +63,6 @@ class MeetingResponse(MeetingBase):
     participants: list[UserResponse] = Field(default_factory=list)
     agenda_items: list[AgendaItemResponse] = Field(default_factory=list)
     decisions: list[DecisionResponse] = Field(default_factory=list)
+    action_items: list[ActionItemResponse] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class MeetingDetailResponse(MeetingResponse):
-    action_items: list[ActionItemResponse] = Field(default_factory=list)

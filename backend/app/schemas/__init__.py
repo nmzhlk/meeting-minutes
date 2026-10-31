@@ -14,7 +14,6 @@ from app.schemas.meeting import (
     AgendaItemResponse,
     DecisionResponse,
     MeetingCreate,
-    MeetingDetailResponse,
     MeetingResponse,
     MeetingUpdate,
 )
@@ -41,7 +40,6 @@ __all__ = [
     "MeetingCreate",
     "MeetingUpdate",
     "MeetingResponse",
-    "MeetingDetailResponse",
     "ActionItemCreate",
     "ActionItemUpdate",
     "ActionItemStatusUpdate",

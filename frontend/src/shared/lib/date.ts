@@ -1,4 +1,4 @@
-export const formatDate = (dateInput: string | Date | undefined): string => {
+export const formatDate = (dateInput: string | Date | null | undefined): string => {
   if (!dateInput) return '';
   const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
   if (isNaN(d.getTime())) return '';
@@ -9,7 +9,7 @@ export const formatDate = (dateInput: string | Date | undefined): string => {
   }).format(d);
 };
 
-export const formatDateTime = (dateInput: string | Date | undefined): string => {
+export const formatDateTime = (dateInput: string | Date | null | undefined): string => {
   if (!dateInput) return '';
   const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
   if (isNaN(d.getTime())) return '';
@@ -22,7 +22,7 @@ export const formatDateTime = (dateInput: string | Date | undefined): string => 
   }).format(d);
 };
 
-export const formatTime = (dateInput: string | Date | undefined): string => {
+export const formatTime = (dateInput: string | Date | null | undefined): string => {
   if (!dateInput) return '';
   const d = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
   if (isNaN(d.getTime())) return '';

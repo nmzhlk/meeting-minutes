@@ -63,11 +63,15 @@ export const AIProcessDialog = ({
 
     setTimeout(async () => {
       setProgress(100);
-      await onComplete();
-      setIsProcessing(false);
-      setCurrentStepIndex(0);
-      setProgress(0);
-      onClose();
+      try {
+        await onComplete();
+        setIsProcessing(false);
+        setCurrentStepIndex(0);
+        setProgress(0);
+        onClose();
+      } catch {
+        setIsProcessing(false);
+      }
     }, 2100);
   };
 
@@ -103,7 +107,7 @@ export const AIProcessDialog = ({
 
       <DialogContent sx={{ pt: 1 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-          Run AI transcription and summarization for <strong>"{meetingTitle}"</strong>.
+          Run AI transcription and summarization for <strong>"{meetingTitle}"</strong>
         </Typography>
 
         {!isProcessing ? (
@@ -130,7 +134,7 @@ export const AIProcessDialog = ({
 
             <Alert severity="info" sx={{ borderRadius: 2 }}>
               The AI model will extract an executive summary, catalog agreed key decisions, and populate
-              the action items list with owners and deadlines.
+              the action items list with owners and deadlines
             </Alert>
           </Box>
         ) : (

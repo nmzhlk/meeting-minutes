@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy import or_, select
@@ -10,7 +11,7 @@ from app.repositories.user import get_users_by_ids
 from app.schemas.meeting import MeetingCreate, MeetingUpdate
 
 
-def _meeting_detail_options() -> tuple[Any, ...]:
+def _meeting_options() -> tuple[Any, ...]:
     return (
         joinedload(Meeting.owner),
         selectinload(Meeting.participants),
@@ -20,19 +21,10 @@ def _meeting_detail_options() -> tuple[Any, ...]:
     )
 
 
-def _meeting_list_options() -> tuple[Any, ...]:
-    return (
-        joinedload(Meeting.owner),
-        selectinload(Meeting.participants),
-        selectinload(Meeting.agenda_items),
-        selectinload(Meeting.decisions),
-    )
-
-
 def get_meeting(db: Session, meeting_id: uuid.UUID) -> Meeting | None:
     query = (
         select(Meeting)
-        .options(*_meeting_detail_options())
+        .options(*_meeting_options())
         .where(Meeting.id == meeting_id)
     )
     return db.scalar(query)
@@ -47,7 +39,7 @@ def get_meetings(
 ) -> list[Meeting]:
     query = (
         select(Meeting)
-        .options(*_meeting_list_options())
+        .options(*_meeting_options())
         .order_by(Meeting.meeting_date.desc())
     )
     if status:
@@ -154,3 +146,54 @@ def delete_meeting(db: Session, db_obj: Meeting) -> Meeting:
     db.delete(db_obj)
     db.commit()
     return db_obj
+
+
+def process_meeting_ai(db: Session, db_obj: Meeting) -> Meeting:
+    db_obj.status = "PROCESSED"
+    db_obj.summary = (
+        "Key agenda items were comprehensively analyzed. Team members reached "
+        "consensus on architectural constraints, assigned ownership for "
+        "integration endpoints, and set up the delivery milestone."
+    )
+
+    db_obj.decisions.clear()
+    decisions = [
+        "Approved technical specifications for asynchronous processing",
+        "Confirmed schedule for frontend interactive milestone",
+        "Configured automated validation rules across all user inputs",
+    ]
+    for idx, text in enumerate(decisions):
+        db_obj.decisions.append(MeetingDecision(decision=text, order_index=idx))
+
+    default_assignee_id = (
+        db_obj.participants[0].id if db_obj.participants else db_obj.owner_id
+    )
+    now = datetime.now(timezone.utc)
+
+    if not db_obj.action_items:
+        db_obj.action_items.append(
+            ActionItem(
+                meeting_id=db_obj.id,
+                title="Review extracted AI protocol and notify team stakeholders",
+                assignee_id=default_assignee_id,
+                due_date=now + timedelta(days=3),
+                status="TODO",
+                priority="HIGH",
+            )
+        )
+        db_obj.action_items.append(
+            ActionItem(
+                meeting_id=db_obj.id,
+                title="Prepare integration test report for stage review",
+                assignee_id=default_assignee_id,
+                due_date=now + timedelta(days=7),
+                status="TODO",
+                priority="MEDIUM",
+            )
+        )
+
+    db.add(db_obj)
+    db.commit()
+    db.refresh(db_obj)
+    return get_meeting(db, db_obj.id) or db_obj
+

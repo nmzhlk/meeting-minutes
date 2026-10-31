@@ -38,7 +38,7 @@ export const DeleteMeetingButton = ({
       <ConfirmDialog
         open={open}
         title="Delete Meeting Protocol?"
-        description={`Are you sure you want to permanently delete "${meetingTitle}" and all its assigned action items? This action cannot be undone.`}
+        description={`Are you sure you want to permanently delete "${meetingTitle}" and all its assigned action items? This action cannot be undone`}
         confirmLabel="Delete Meeting"
         cancelLabel="Keep Meeting"
         isDestructive={true}

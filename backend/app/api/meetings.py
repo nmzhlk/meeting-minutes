@@ -8,7 +8,6 @@ from app.repositories import user as user_repo
 from app.schemas.enums import MeetingStatus
 from app.schemas.meeting import (
     MeetingCreate,
-    MeetingDetailResponse,
     MeetingResponse,
     MeetingUpdate,
 )
@@ -62,19 +61,19 @@ def create_meeting(
     )
 
 
-@router.get("/{meeting_id}", response_model=MeetingDetailResponse)
+@router.get("/{meeting_id}", response_model=MeetingResponse)
 def get_meeting(
     db: DbSession,
     meeting_id: uuid.UUID,
     current_user: CurrentUser,
-) -> MeetingDetailResponse:
+) -> MeetingResponse:
     meeting = meeting_repo.get_meeting(db, meeting_id)
     if not meeting:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Meeting with id '{meeting_id}' not found",
         )
-    return MeetingDetailResponse.model_validate(meeting)
+    return MeetingResponse.model_validate(meeting)
 
 
 @router.put("/{meeting_id}", response_model=MeetingResponse)
@@ -126,3 +125,27 @@ def delete_meeting(
 
     meeting_repo.delete_meeting(db, meeting)
     return None
+
+
+@router.post("/{meeting_id}/process-ai", response_model=MeetingResponse)
+def process_meeting_ai(
+    db: DbSession,
+    meeting_id: uuid.UUID,
+    current_user: CurrentUser,
+) -> MeetingResponse:
+    meeting = meeting_repo.get_meeting(db, meeting_id)
+    if not meeting:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Meeting with id '{meeting_id}' not found",
+        )
+
+    if meeting.owner_id is not None and meeting.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to modify this meeting",
+        )
+
+    return MeetingResponse.model_validate(
+        meeting_repo.process_meeting_ai(db, meeting)
+    )

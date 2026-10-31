@@ -80,10 +80,19 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     }
   }
 
-  const response = await fetch(url, {
-    ...restOptions,
-    headers,
-  });
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...restOptions,
+      headers,
+    });
+  } catch (err: unknown) {
+    const errorMsg =
+      err instanceof Error && err.name === 'AbortError'
+        ? 'Request was cancelled'
+        : 'Network connection failed, please check your internet connection or server availability';
+    throw new ApiError(0, errorMsg);
+  }
 
   if (response.status === 401 && !skipAuth && !_retry && !endpoint.includes('/auth/')) {
     if (!isRefreshing) {
@@ -101,16 +110,56 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   if (!response.ok) {
-    let errorMessage = `Request failed with status ${response.status}`;
+    let errorMessage: string;
+    switch (response.status) {
+      case 400:
+        errorMessage = 'Invalid request parameters';
+        break;
+      case 401:
+        errorMessage = 'Authentication required, please log in again';
+        break;
+      case 403:
+        errorMessage = 'Access denied, you do not have permission to perform this action';
+        break;
+      case 404:
+        errorMessage = 'The requested resource was not found';
+        break;
+      case 422:
+        errorMessage = 'Submitted data failed validation check';
+        break;
+      default:
+        errorMessage =
+          response.status >= 500
+            ? 'Server error encountered, please try again later'
+            : `Request failed with status ${response.status}`;
+        break;
+    }
+
     let errorData: unknown = null;
     try {
       errorData = await response.json();
       if (errorData && typeof errorData === 'object' && 'detail' in errorData) {
         const detail = (errorData as { detail: unknown }).detail;
-        errorMessage = typeof detail === 'string' ? detail : JSON.stringify(detail);
+        if (typeof detail === 'string') {
+          errorMessage = detail;
+        } else if (Array.isArray(detail)) {
+          errorMessage = detail
+            .map((item) => {
+              if (item && typeof item === 'object' && 'msg' in item) {
+                const loc = Array.isArray(item.loc)
+                  ? item.loc.filter((part: unknown) => part !== 'body').join('.')
+                  : '';
+                return loc ? `${loc}: ${item.msg}` : String(item.msg);
+              }
+              return JSON.stringify(item);
+            })
+            .join('; ');
+        } else if (detail !== null && detail !== undefined) {
+          errorMessage = JSON.stringify(detail);
+        }
       }
     } catch {
-      // Ignore if response is not JSON
+      // Response is not JSON; keep fallback status error message
     }
     throw new ApiError(response.status, errorMessage, errorData);
   }

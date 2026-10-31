@@ -1,4 +1,4 @@
-import { useState, type SyntheticEvent } from 'react';
+import { useState, useEffect, type SyntheticEvent } from 'react';
 import {
   Box,
   Card,
@@ -15,6 +15,11 @@ import {
   Collapse,
   Alert,
   Divider,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -22,8 +27,10 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import type { CreateMeetingInput, Participant } from '../../../shared/types';
+import type { CreateMeetingInput, Participant, User } from '../../../shared/types';
 import { ParticipantChip } from '../../../entities/participant';
+import { usersApi } from '../../../shared/api';
+import { useAuth } from '../../auth';
 import {
   getDefaultMeetingDate,
   validateMeetingTitle,
@@ -42,16 +49,69 @@ export const CreateMeetingForm = ({
   onCancel,
   isSubmitting = false,
 }: CreateMeetingFormProps) => {
+  const { user: currentUser } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(getDefaultMeetingDate);
   const [durationMinutes, setDurationMinutes] = useState('45');
 
-  const [participants, setParticipants] = useState<Participant[]>([
-    { id: 'p1', name: 'John Doe', email: 'john@example.com', role: 'Organizer' },
-  ]);
-  const [participantInput, setParticipantInput] = useState('');
-  const [participantRole, setParticipantRole] = useState('Developer');
+  const [participants, setParticipants] = useState<Participant[]>(() => {
+    if (currentUser) {
+      return [
+        {
+          id: currentUser.id,
+          name: currentUser.name,
+          email: currentUser.email,
+          role: currentUser.role || 'Organizer',
+          avatarUrl: currentUser.avatarUrl,
+        },
+      ];
+    }
+    return [];
+  });
+
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [loadingUsers, setLoadingUsers] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    usersApi
+      .getUsers()
+      .then((users) => {
+        if (isMounted) {
+          setAllUsers(users);
+          setParticipants((prev) => {
+            if (prev.length === 0 && currentUser) {
+              const matched = users.find((u) => u.id === currentUser.id);
+              return [
+                matched || {
+                  id: currentUser.id,
+                  name: currentUser.name,
+                  email: currentUser.email,
+                  role: currentUser.role || 'Organizer',
+                  avatarUrl: currentUser.avatarUrl,
+                },
+              ];
+            }
+            return prev;
+          });
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load registered users:', err);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoadingUsers(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser]);
 
   const [agendaList, setAgendaList] = useState<string[]>([
     'Review agenda & open topics',
@@ -62,25 +122,22 @@ export const CreateMeetingForm = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
 
+  const availableUsers = allUsers.filter(
+    (u) => !participants.some((p) => p.id === u.id)
+  );
+
   const handleAddParticipant = () => {
-    const trimmed = participantInput.trim();
-    if (!trimmed) return;
+    if (!selectedUserId) return;
+    const found = allUsers.find((u) => u.id === selectedUserId);
+    if (!found) return;
 
-    const email = `${trimmed.toLowerCase().replace(/\s+/g, '.')}@example.com`;
-    const newParticipant: Participant = {
-      id: `p-${Date.now()}`,
-      name: trimmed,
-      email,
-      role: participantRole.trim() || 'Participant',
-    };
-
-    setParticipants((prev) => [...prev, newParticipant]);
-    setParticipantInput('');
+    setParticipants((prev) => [...prev, found]);
+    setSelectedUserId('');
   };
 
   const handleRemoveParticipant = (id: string) => {
     if (participants.length <= 1) {
-      setGeneralError('A meeting must have at least one participant / organizer.');
+      setGeneralError('A meeting must have at least one participant / organizer');
       return;
     }
     setGeneralError(null);
@@ -124,10 +181,11 @@ export const CreateMeetingForm = ({
 
     const payload: CreateMeetingInput = {
       title: title.trim(),
-      description: description.trim(),
+      description: description.trim() || null,
       date: new Date(date).toISOString(),
       durationMinutes: Number(durationMinutes),
       participants,
+      participantIds: participants.map((p) => p.id),
       agenda: agendaList,
     };
 
@@ -164,7 +222,7 @@ export const CreateMeetingForm = ({
               1. Meeting Information
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-              Specify the subject, agenda goal, and description of your session.
+              Specify the subject, agenda goal, and description of your session
             </Typography>
 
             <Stack spacing={2.5}>
@@ -202,7 +260,7 @@ export const CreateMeetingForm = ({
               2. Scheduling & Duration
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-              Set when the session starts and its planned duration.
+              Set when the session starts and its planned duration
             </Typography>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '2fr 1fr' }, gap: 2.5 }}>
@@ -261,7 +319,7 @@ export const CreateMeetingForm = ({
               3. Attendees & Stakeholders
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Add team members who will participate or receive the minutes.
+              Add team members who will participate or receive the minutes
             </Typography>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -274,35 +332,36 @@ export const CreateMeetingForm = ({
               ))}
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
-              <TextField
-                size="small"
-                placeholder="Attendee name (e.g., Alice Smith)"
-                value={participantInput}
-                onChange={(e) => setParticipantInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAddParticipant();
-                  }
-                }}
-                sx={{ flex: 2, minWidth: 200 }}
-              />
-              <TextField
-                size="small"
-                placeholder="Role (e.g. Developer, Designer)"
-                value={participantRole}
-                onChange={(e) => setParticipantRole(e.target.value)}
-                sx={{ flex: 1, minWidth: 140 }}
-              />
+            <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center' }}>
+              <FormControl size="small" sx={{ flex: 1, minWidth: 260 }}>
+                <InputLabel id="attendee-select-label">Select Registered Colleague</InputLabel>
+                <Select
+                  labelId="attendee-select-label"
+                  value={selectedUserId}
+                  label="Select Registered Colleague"
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  disabled={loadingUsers || availableUsers.length === 0}
+                >
+                  {availableUsers.map((u) => (
+                    <MenuItem key={u.id} value={u.id}>
+                      {u.name} ({u.role || 'Member'}) — {u.email}
+                    </MenuItem>
+                  ))}
+                  {availableUsers.length === 0 && !loadingUsers && (
+                    <MenuItem disabled value="">
+                      All registered team members added
+                    </MenuItem>
+                  )}
+                </Select>
+              </FormControl>
               <Button
                 variant="outlined"
                 color="primary"
-                startIcon={<PersonAddIcon />}
+                startIcon={loadingUsers ? <CircularProgress size={16} /> : <PersonAddIcon />}
                 onClick={handleAddParticipant}
-                disabled={!participantInput.trim()}
+                disabled={!selectedUserId || loadingUsers}
               >
-                Add
+                Add Attendee
               </Button>
             </Box>
           </Box>
@@ -314,7 +373,7 @@ export const CreateMeetingForm = ({
               4. Meeting Agenda Points
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Define talking points to guide discussion alignment.
+              Define talking points to guide discussion alignment
             </Typography>
 
             <List disablePadding sx={{ mb: 2 }}>

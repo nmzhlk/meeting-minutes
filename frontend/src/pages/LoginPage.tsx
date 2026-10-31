@@ -17,13 +17,15 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import EventNoteIcon from '@mui/icons-material/EventNote';
 import { useAuth } from '../features/auth';
+import { useDocumentTitle } from '../shared/lib';
 
 export const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
+
+  useDocumentTitle('Sign In');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -243,10 +245,6 @@ export const LoginPage = () => {
           color: 'text.secondary',
         }}
       >
-        <EventNoteIcon fontSize="small" />
-        <Typography variant="caption">
-          Meeting Minutes &bull; JWT Authentication
-        </Typography>
       </Box>
     </Box>
   );
