@@ -6,6 +6,7 @@ import {
   Card,
   CardContent,
   Button,
+  Chip,
   List,
   ListItem,
   ListItemIcon,
@@ -30,11 +31,23 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
+import ShareIcon from '@mui/icons-material/Share';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import type { Meeting, ActionItemStatus, CreateActionItemInput, UpdateMeetingInput } from '../shared/types';
+import type {
+  Meeting,
+  ActionItem,
+  ActionItemStatus,
+  CreateActionItemInput,
+  UpdateMeetingInput,
+} from '../shared/types';
 import { meetingsApi, actionItemsApi } from '../shared/api';
-import { formatDateTime } from '../shared/lib';
-import { EmptyState, MeetingDetailsSkeleton, useFeedback } from '../shared/ui';
+import { formatDateTime, useDocumentTitle } from '../shared/lib';
+import {
+  EmptyState,
+  MeetingDetailsSkeleton,
+  ConfirmDialog,
+  useFeedback,
+} from '../shared/ui';
 import { MeetingStatusBadge } from '../entities/meeting';
 import { ActionItemRow } from '../entities/action-item';
 import { ParticipantAvatar } from '../entities/participant';
@@ -56,6 +69,10 @@ export const MeetingDetailsPage = () => {
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [actionItemToDelete, setActionItemToDelete] = useState<ActionItem | null>(null);
+  const [isDeletingTask, setIsDeletingTask] = useState(false);
+
+  useDocumentTitle(meeting?.title ? meeting.title : 'Meeting Details');
 
   useEffect(() => {
     if (!id) return;
@@ -103,11 +120,21 @@ export const MeetingDetailsPage = () => {
   const totalTasks = actionItems.length;
   const doneTasks = actionItems.filter((i) => i.status === 'DONE').length;
   const progressPercent = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const isAllTasksCompleted = totalTasks > 0 && doneTasks === totalTasks;
 
   const handleCopySummary = () => {
     if (!meeting.summary) return;
     navigator.clipboard.writeText(meeting.summary);
     feedback.showSuccess('Meeting summary copied to clipboard');
+  };
+
+  const handleCopyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      feedback.showSuccess('Meeting link copied to clipboard');
+    } catch {
+      feedback.showError('Failed to copy link to clipboard');
+    }
   };
 
   const handleActionStatusChange = async (actionId: string, status: ActionItemStatus) => {
@@ -217,7 +244,7 @@ export const MeetingDetailsPage = () => {
   return (
     <Fade in={true} timeout={300}>
       <Box sx={{ maxWidth: 1040, mx: 'auto' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 1.5 }}>
           <Button
             component={Link}
             to="/"
@@ -227,7 +254,19 @@ export const MeetingDetailsPage = () => {
             Back to Dashboard
           </Button>
 
-          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center', flexWrap: 'wrap' }}>
+            <Tooltip title="Copy direct link to this meeting">
+              <Button
+                variant="outlined"
+                color="inherit"
+                startIcon={<ShareIcon />}
+                onClick={handleCopyShareLink}
+                sx={{ borderRadius: 2, borderColor: 'divider' }}
+              >
+                Share Link
+              </Button>
+            </Tooltip>
+
             {isOwner && (
               <Button
                 variant="outlined"
@@ -386,17 +425,52 @@ export const MeetingDetailsPage = () => {
 
                 {totalTasks > 0 && (
                   <Box sx={{ mb: 2.5 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.75 }}>
-                      <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                        Progress
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 0.75,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+                          Progress
+                        </Typography>
+                        {isAllTasksCompleted && (
+                          <Box
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              bgcolor: 'success.light',
+                              color: 'success.contrastText',
+                              px: 1,
+                              py: 0.25,
+                              borderRadius: 1.5,
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                            }}
+                          >
+                            <CheckCircleIcon sx={{ fontSize: 14 }} />
+                            All Tasks Completed
+                          </Box>
+                        )}
+                      </Box>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontWeight: 700,
+                          color: isAllTasksCompleted ? 'success.main' : 'primary.main',
+                        }}
+                      >
                         {progressPercent}%
                       </Typography>
                     </Box>
                     <LinearProgress
                       variant="determinate"
                       value={progressPercent}
+                      color={isAllTasksCompleted ? 'success' : 'primary'}
                       sx={{
                         height: 6,
                         borderRadius: 3,
@@ -436,7 +510,7 @@ export const MeetingDetailsPage = () => {
                             key={item.id}
                             item={item}
                             onStatusChange={handleActionStatusChange}
-                            onDelete={isOwner ? handleDeleteActionItem : undefined}
+                            onDelete={isOwner ? () => setActionItemToDelete(item) : undefined}
                           />
                         ))}
                       </TableBody>
@@ -484,23 +558,64 @@ export const MeetingDetailsPage = () => {
                   Attendees ({meeting.participants?.length || 0})
                 </Typography>
                 <List disablePadding>
-                  {meeting.participants?.map((participant) => (
-                    <ListItem key={participant.id} disableGutters sx={{ py: 1, gap: 1.5 }}>
-                      <ParticipantAvatar participant={participant} size={34} />
-                      <ListItemText
-                        primary={
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {participant.name}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography variant="caption" color="text.secondary">
-                            {participant.role || participant.email}
-                          </Typography>
-                        }
-                      />
-                    </ListItem>
-                  ))}
+                  {meeting.participants?.map((participant) => {
+                    const isParticipantOwner = participant.id === meeting.ownerId;
+                    const isCurrentParticipant = user?.id === participant.id;
+
+                    return (
+                      <ListItem
+                        key={participant.id}
+                        disableGutters
+                        sx={{ py: 1, gap: 1.5, alignItems: 'center' }}
+                      >
+                        <ParticipantAvatar participant={participant} size={34} />
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {participant.name}
+                              </Typography>
+                              {isParticipantOwner && (
+                                <Chip
+                                  label="Organizer"
+                                  size="small"
+                                  color="primary"
+                                  variant="outlined"
+                                  sx={{
+                                    height: 20,
+                                    fontSize: '0.68rem',
+                                    fontWeight: 600,
+                                    borderRadius: 1,
+                                    px: 0.25,
+                                  }}
+                                />
+                              )}
+                              {isCurrentParticipant && (
+                                <Chip
+                                  label="You"
+                                  size="small"
+                                  color="secondary"
+                                  variant="filled"
+                                  sx={{
+                                    height: 20,
+                                    fontSize: '0.68rem',
+                                    fontWeight: 600,
+                                    borderRadius: 1,
+                                    px: 0.25,
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          }
+                          secondary={
+                            <Typography variant="caption" color="text.secondary">
+                              {participant.role || participant.email}
+                            </Typography>
+                          }
+                        />
+                      </ListItem>
+                    );
+                  })}
                 </List>
               </CardContent>
             </Card>
@@ -526,6 +641,32 @@ export const MeetingDetailsPage = () => {
           meeting={meeting}
           onClose={() => setIsEditDialogOpen(false)}
           onSubmit={handleUpdateMeeting}
+        />
+
+        <ConfirmDialog
+          open={Boolean(actionItemToDelete)}
+          title="Delete Action Item?"
+          description={
+            actionItemToDelete
+              ? `Are you sure you want to remove the task "${actionItemToDelete.title}"? This action cannot be undone`
+              : ''
+          }
+          confirmLabel="Delete Task"
+          cancelLabel="Cancel"
+          isDestructive={true}
+          loading={isDeletingTask}
+          onConfirm={async () => {
+            if (!actionItemToDelete) return;
+            setIsDeletingTask(true);
+            await handleDeleteActionItem(actionItemToDelete.id);
+            setIsDeletingTask(false);
+            setActionItemToDelete(null);
+          }}
+          onClose={() => {
+            if (!isDeletingTask) {
+              setActionItemToDelete(null);
+            }
+          }}
         />
       </Box>
     </Fade>

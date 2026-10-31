@@ -4,6 +4,7 @@ import { Box, Typography, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import type { CreateMeetingInput } from '../shared/types';
 import { meetingsApi } from '../shared/api';
+import { useDocumentTitle } from '../shared/lib';
 import { useFeedback } from '../shared/ui';
 import { CreateMeetingForm } from '../features/create-meeting';
 
@@ -11,6 +12,8 @@ export const CreateMeetingPage = () => {
   const navigate = useNavigate();
   const feedback = useFeedback();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useDocumentTitle('New Meeting');
 
   const handleCreateMeeting = async (input: CreateMeetingInput) => {
     setIsSubmitting(true);

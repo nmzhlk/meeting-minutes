@@ -16,8 +16,8 @@ import {
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import PersonAddOutlinedIcon from '@mui/icons-material/PersonAddOutlined';
-import EventNoteIcon from '@mui/icons-material/EventNote';
 import { useAuth } from '../features/auth';
+import { useDocumentTitle } from '../shared/lib';
 
 const POPULAR_ROLES = [
   'Team Lead',
@@ -32,6 +32,8 @@ const POPULAR_ROLES = [
 export const RegisterPage = () => {
   const navigate = useNavigate();
   const { register } = useAuth();
+
+  useDocumentTitle('Create Account');
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -274,10 +276,6 @@ export const RegisterPage = () => {
           color: 'text.secondary',
         }}
       >
-        <EventNoteIcon fontSize="small" />
-        <Typography variant="caption">
-          Meeting Minutes &bull; Secure Account Registration
-        </Typography>
       </Box>
     </Box>
   );

@@ -7,6 +7,7 @@ from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.models.action_item import ActionItem
 from app.models.meeting import Meeting, MeetingAgendaItem, MeetingDecision
+from app.models.refresh_token import RefreshToken  # noqa: F401
 from app.models.user import User
 from app.schemas.enums import ActionItemStatus, MeetingStatus, Priority
 
