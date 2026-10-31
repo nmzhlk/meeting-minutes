@@ -16,13 +16,13 @@ export const CreateMeetingPage = () => {
     setIsSubmitting(true);
     try {
       const created = await meetingsApi.createMeeting(input);
-      feedback.showSuccess('Meeting scheduled successfully!');
+      feedback.showSuccess('Meeting scheduled successfully');
       navigate(`/meetings/${created.id}`);
     } catch (err: unknown) {
       const msg =
         err instanceof Error
           ? err.message
-          : 'Failed to schedule meeting. Please try again.';
+          : 'Failed to schedule meeting, please try again';
       feedback.showError(msg);
     } finally {
       setIsSubmitting(false);
@@ -44,7 +44,7 @@ export const CreateMeetingPage = () => {
         Schedule a New Meeting
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3.5 }}>
-        Define agenda topics, attendees, and scheduling details for your upcoming discussion.
+        Define agenda topics, attendees, and scheduling details for your upcoming discussion
       </Typography>
 
       <CreateMeetingForm

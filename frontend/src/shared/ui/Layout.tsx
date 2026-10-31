@@ -9,7 +9,6 @@ import {
   Button,
   Avatar,
   Tooltip,
-  IconButton,
   Menu,
   MenuItem,
   ListItemIcon,
@@ -19,16 +18,13 @@ import {
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import AddIcon from '@mui/icons-material/Add';
 import DashboardIcon from '@mui/icons-material/Dashboard';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { ConfirmDialog } from './ConfirmDialog';
 import { useAuth } from '../../features/auth';
 
 interface LayoutProps {
   children: ReactNode;
-  onResetData?: () => void;
 }
 
 const getInitials = (name?: string): string => {
@@ -38,24 +34,16 @@ const getInitials = (name?: string): string => {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 };
 
-export const Layout = ({ children, onResetData }: LayoutProps) => {
+export const Layout = ({ children }: LayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
 
-  const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
 
   const isCurrent = (path: string) => {
     if (path === '/') return location.pathname === '/';
     return location.pathname.startsWith(path);
-  };
-
-  const handleConfirmReset = () => {
-    setResetDialogOpen(false);
-    if (onResetData) {
-      onResetData();
-    }
   };
 
   const handleOpenUserMenu = (event: MouseEvent<HTMLElement>) => {
@@ -172,18 +160,6 @@ export const Layout = ({ children, onResetData }: LayoutProps) => {
                 </>
               )}
 
-              {onResetData && (
-                <Tooltip title="Reset to demo data">
-                  <IconButton
-                    size="small"
-                    onClick={() => setResetDialogOpen(true)}
-                    sx={{ color: 'text.secondary', border: '1px solid', borderColor: 'divider' }}
-                  >
-                    <RestartAltIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
-
               {isAuthenticated && user ? (
                 <>
                   <Tooltip title={`${user.name} (${user.role})`}>
@@ -275,17 +251,6 @@ export const Layout = ({ children, onResetData }: LayoutProps) => {
       <Box component="main" sx={{ flexGrow: 1, py: { xs: 2.5, sm: 4 } }}>
         <Container maxWidth="lg">{children}</Container>
       </Box>
-
-      <ConfirmDialog
-        open={resetDialogOpen}
-        title="Reset Demo Data?"
-        description="This will restore all meetings and action items to their original initial state. Any newly created or modified meetings will be overwritten."
-        confirmLabel="Reset Data"
-        cancelLabel="Cancel"
-        isDestructive={true}
-        onConfirm={handleConfirmReset}
-        onClose={() => setResetDialogOpen(false)}
-      />
     </Box>
   );
 };

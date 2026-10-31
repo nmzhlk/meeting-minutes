@@ -112,7 +112,7 @@ const ActionItemFormContent = ({
       <DialogTitle sx={{ fontWeight: 700, pb: 1 }}>Add New Action Item</DialogTitle>
       <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
         <Typography variant="body2" color="text.secondary">
-          Assign a follow-up task with a clear owner, priority, and deadline.
+          Assign a follow-up task with a clear owner, priority, and deadline
         </Typography>
 
         {error && (

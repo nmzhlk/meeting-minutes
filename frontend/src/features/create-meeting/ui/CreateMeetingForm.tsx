@@ -137,7 +137,7 @@ export const CreateMeetingForm = ({
 
   const handleRemoveParticipant = (id: string) => {
     if (participants.length <= 1) {
-      setGeneralError('A meeting must have at least one participant / organizer.');
+      setGeneralError('A meeting must have at least one participant / organizer');
       return;
     }
     setGeneralError(null);
@@ -222,7 +222,7 @@ export const CreateMeetingForm = ({
               1. Meeting Information
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-              Specify the subject, agenda goal, and description of your session.
+              Specify the subject, agenda goal, and description of your session
             </Typography>
 
             <Stack spacing={2.5}>
@@ -260,7 +260,7 @@ export const CreateMeetingForm = ({
               2. Scheduling & Duration
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2.5 }}>
-              Set when the session starts and its planned duration.
+              Set when the session starts and its planned duration
             </Typography>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '2fr 1fr' }, gap: 2.5 }}>
@@ -319,7 +319,7 @@ export const CreateMeetingForm = ({
               3. Attendees & Stakeholders
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Add team members who will participate or receive the minutes.
+              Add team members who will participate or receive the minutes
             </Typography>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -373,7 +373,7 @@ export const CreateMeetingForm = ({
               4. Meeting Agenda Points
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Define talking points to guide discussion alignment.
+              Define talking points to guide discussion alignment
             </Typography>
 
             <List disablePadding sx={{ mb: 2 }}>

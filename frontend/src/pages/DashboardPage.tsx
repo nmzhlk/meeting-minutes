@@ -143,7 +143,7 @@ export const DashboardPage = () => {
       ) : meetings.length === 0 ? (
         <EmptyState
           title="No Meetings Scheduled"
-          description="You don't have any meeting sessions recorded yet. Start by scheduling a new meeting."
+          description="You don't have any meeting sessions recorded yet, start by scheduling a new meeting"
           actionLabel="Schedule First Meeting"
           onAction={() => navigate('/meetings/create')}
           actionIcon={<AddIcon />}
@@ -151,7 +151,7 @@ export const DashboardPage = () => {
       ) : filteredMeetings.length === 0 ? (
         <EmptyState
           title="No Matching Meetings"
-          description={`No sessions matched "${search || statusFilter}". Try clearing your filters.`}
+          description={`No sessions matched "${search || statusFilter}", try clearing your filters`}
           actionLabel="Reset Filters"
           onAction={() => {
             setSearch('');

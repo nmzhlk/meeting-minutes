@@ -166,7 +166,7 @@ export const MeetingDetailsPage = () => {
         };
       });
       setIsTaskDialogOpen(false);
-      feedback.showSuccess('New action item created!');
+      feedback.showSuccess('New action item created');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to create action item';
       feedback.showError(msg);
@@ -213,7 +213,7 @@ export const MeetingDetailsPage = () => {
 
       const refreshed = await meetingsApi.getMeetingById(meeting.id);
       setMeeting(refreshed);
-      feedback.showSuccess('AI protocol, summary, and action items generated and saved!');
+      feedback.showSuccess('AI protocol, summary, and action items generated and saved');
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to generate AI protocol';
       feedback.showError(msg);
@@ -239,7 +239,7 @@ export const MeetingDetailsPage = () => {
     try {
       const updated = await meetingsApi.updateMeeting(meeting.id, input);
       setMeeting((prev) => (prev ? { ...prev, ...updated } : updated));
-      feedback.showSuccess('Meeting details updated successfully!');
+      feedback.showSuccess('Meeting details updated successfully');
       setIsEditDialogOpen(false);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to update meeting';
@@ -273,7 +273,7 @@ export const MeetingDetailsPage = () => {
               </Button>
             )}
 
-            {meeting.status !== 'PROCESSED' && (
+            {isOwner && meeting.status !== 'PROCESSED' && (
               <Button
                 variant="contained"
                 color="secondary"
@@ -304,7 +304,7 @@ export const MeetingDetailsPage = () => {
             </Box>
 
             <Typography variant="body1" color="text.secondary" sx={{ mb: 2.5 }}>
-              {meeting.description || 'No description provided for this session.'}
+              {meeting.description || 'No description provided for this session'}
             </Typography>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, pt: 1.5, borderTop: '1px solid', borderColor: 'divider' }}>
@@ -383,9 +383,13 @@ export const MeetingDetailsPage = () => {
                   <EmptyState
                     icon={<AutoAwesomeIcon sx={{ fontSize: 32 }} />}
                     title="No AI Protocol Generated Yet"
-                    description="Upload a recording or run AI analysis to extract summary and decisions."
-                    actionLabel="Generate with AI"
-                    onAction={() => setIsAiDialogOpen(true)}
+                    description={
+                      isOwner
+                        ? 'Upload a recording or run AI analysis to extract summary and decisions'
+                        : 'The meeting organizer has not generated the AI protocol yet'
+                    }
+                    actionLabel={isOwner ? 'Generate with AI' : undefined}
+                    onAction={isOwner ? () => setIsAiDialogOpen(true) : undefined}
                   />
                 )}
               </CardContent>
@@ -441,7 +445,7 @@ export const MeetingDetailsPage = () => {
                 {totalTasks === 0 ? (
                   <EmptyState
                     title="No Action Items Assigned"
-                    description="Add tasks manually or generate them automatically using the AI minutes feature."
+                    description="Add tasks manually or generate them automatically using the AI minutes feature"
                     actionLabel="Create Action Item"
                     onAction={() => setIsTaskDialogOpen(true)}
                     actionIcon={<AddIcon />}
@@ -457,7 +461,7 @@ export const MeetingDetailsPage = () => {
                           <TableCell>Priority</TableCell>
                           <TableCell>Due Date</TableCell>
                           <TableCell>Status</TableCell>
-                          <TableCell sx={{ width: 44 }} />
+                          {isOwner && <TableCell sx={{ width: 44 }} />}
                         </TableRow>
                       </TableHead>
                       <TableBody>
@@ -502,7 +506,7 @@ export const MeetingDetailsPage = () => {
                   </List>
                 ) : (
                   <Typography variant="body2" color="text.secondary">
-                    No agenda specified.
+                    No agenda specified
                   </Typography>
                 )}
               </CardContent>
